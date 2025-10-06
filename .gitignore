@@ -1,0 +1,13 @@
+# Key files
+android/app/scanmate-key.jks
+android/key.properties
+
+# Android Studio generated files
+.gradle
+/build
+/captures
+.DS_Store
+.idea
+.cxx
+local.properties
+*.iml
