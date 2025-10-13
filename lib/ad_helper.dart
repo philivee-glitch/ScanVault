@@ -1,9 +1,20 @@
 ﻿import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 class AdHelper {
-  // Your AdMob Ad Unit IDs
-  static const String bannerAdUnitId = 'ca-app-pub-9349326189536065/7646031315';
-  static const String interstitialAdUnitId = 'ca-app-pub-9349326189536065/3028129450';
+  // Toggle between test and production ads
+  static const bool isTestMode = true; // Set to false for production
+  
+  // Test Ad Unit IDs (provided by Google)
+  static const String testBannerAdUnitId = 'ca-app-pub-3940256099942544/6300978111';
+  static const String testInterstitialAdUnitId = 'ca-app-pub-3940256099942544/1033173712';
+  
+  // Your Production AdMob Ad Unit IDs
+  static const String prodBannerAdUnitId = 'ca-app-pub-9349326189536065/7646031315';
+  static const String prodInterstitialAdUnitId = 'ca-app-pub-9349326189536065/3028129450';
+  
+  // Get the correct Ad Unit ID based on mode
+  static String get bannerAdUnitId => isTestMode ? testBannerAdUnitId : prodBannerAdUnitId;
+  static String get interstitialAdUnitId => isTestMode ? testInterstitialAdUnitId : prodInterstitialAdUnitId;
   
   static BannerAd? _bannerAd;
   static InterstitialAd? _interstitialAd;
@@ -17,7 +28,7 @@ class AdHelper {
       request: const AdRequest(),
       listener: BannerAdListener(
         onAdLoaded: (ad) {
-          print('Banner ad loaded');
+          print('Banner ad loaded (Test Mode: $isTestMode)');
         },
         onAdFailedToLoad: (ad, error) {
           print('Banner ad failed to load: $error');
@@ -25,7 +36,6 @@ class AdHelper {
         },
       ),
     );
-    
     _bannerAd!.load();
     return _bannerAd!;
   }
@@ -39,7 +49,7 @@ class AdHelper {
         onAdLoaded: (ad) {
           _interstitialAd = ad;
           _interstitialAdLoaded = true;
-          print('Interstitial ad loaded');
+          print('Interstitial ad loaded (Test Mode: $isTestMode)');
         },
         onAdFailedToLoad: (error) {
           print('Interstitial ad failed to load: $error');
@@ -65,7 +75,6 @@ class AdHelper {
           loadInterstitialAd();
         },
       );
-      
       _interstitialAd!.show();
     } else {
       print('Interstitial ad not ready yet');
