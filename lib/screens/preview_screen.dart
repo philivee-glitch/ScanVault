@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'dart:io';
 import 'dart:ui' as ui;
 import 'package:image/image.dart' as img;
@@ -317,7 +317,7 @@ class _PreviewScreenState extends State<PreviewScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   const Text(
-                    'Drag corners to document edges • No white borders',
+                    'Drag corners to document edges � No white borders',
                     style: TextStyle(color: Colors.white70, fontSize: 13),
                   ),
                   const SizedBox(height: 12),

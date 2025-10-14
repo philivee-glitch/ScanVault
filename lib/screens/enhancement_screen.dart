@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:image/image.dart' as img;
 import 'package:path_provider/path_provider.dart';
@@ -218,8 +218,8 @@ class _EnhancementScreenState extends State<EnhancementScreen> {
         ),
       );
       
-      // Show interstitial ad after saving document
-      AdHelper.showInterstitialAd();
+      // Show interstitial ad after saving document (frequency-capped: every 3rd save)
+      AdHelper.showInterstitialAdAfterSave();
       
       Navigator.popUntil(context, (route) => route.isFirst);
       

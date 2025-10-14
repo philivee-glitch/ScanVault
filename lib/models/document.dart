@@ -1,4 +1,4 @@
-﻿class ScannedDocument {
+class ScannedDocument {
   final String id;
   final String name;
   final List<String> imagePaths;

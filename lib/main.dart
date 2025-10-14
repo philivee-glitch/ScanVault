@@ -1,129 +1,91 @@
 ﻿import 'package:flutter/material.dart';
-import 'package:camera/camera.dart';
-import 'screens/camera_screen.dart';
-import 'screens/documents_screen.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:scanvault_app/ad_helper.dart';
+import 'package:scanvault_app/upgrade_manager.dart';
+import 'package:scanvault_app/screens/documents_screen.dart';
+import 'package:scanvault_app/screens/home_screen.dart';
 
-Future<void> main() async {
+void main() {
   WidgetsFlutterBinding.ensureInitialized();
+  MobileAds.instance.initialize();
   
-  // Initialize AdMob
-  await MobileAds.instance.initialize();
+  // Pre-load interstitial and app open ads
+  AdHelper.loadInterstitialAd();
+  AdHelper.loadAppOpenAd();
   
-  final cameras = await availableCameras();
-  final firstCamera = cameras.first;
-  
-  runApp(MyApp(camera: firstCamera));
+  runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
-  final CameraDescription camera;
+class MyApp extends StatefulWidget {
+  const MyApp({Key? key}) : super(key: key);
 
-  const MyApp({super.key, required this.camera});
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
+  DateTime? _lastAdShownTime;
+  static const Duration _adCooldown = Duration(minutes: 15);
+  bool _hasCheckedAppOpenPrompt = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _checkAppOpenPrompt();
+  }
+
+  Future<void> _checkAppOpenPrompt() async {
+    // Wait a bit for the app to fully load
+    await Future.delayed(Duration(seconds: 1));
+    
+    if (!_hasCheckedAppOpenPrompt && mounted) {
+      _hasCheckedAppOpenPrompt = true;
+      
+      // Check if we should show upgrade prompt based on app opens
+      if (await UpgradeManager.checkAppOpenPrompt()) {
+        if (mounted) {
+          UpgradeManager.showUpgradeDialog(
+            context,
+            reason: 'Welcome back! Enjoying ScanVault? Go ad-free!',
+          );
+        }
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    
+    if (state == AppLifecycleState.resumed) {
+      // Show app open ad only if cooldown period has passed
+      if (_lastAdShownTime == null ||
+          DateTime.now().difference(_lastAdShownTime!) > _adCooldown) {
+        AdHelper.showAppOpenAdIfAvailable();
+        _lastAdShownTime = DateTime.now();
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    // Set context for AdHelper to show upgrade prompts
+    AdHelper.setContext(context);
+    
     return MaterialApp(
       title: 'ScanVault',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
         useMaterial3: true,
       ),
-      home: WelcomeScreen(camera: camera),
-    );
-  }
-}
-
-class WelcomeScreen extends StatelessWidget {
-  final CameraDescription camera;
-
-  const WelcomeScreen({super.key, required this.camera});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Colors.blue.shade700, Colors.blue.shade900],
-          ),
-        ),
-        child: SafeArea(
-          child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(
-                  Icons.document_scanner,
-                  size: 120,
-                  color: Colors.white,
-                ),
-                const SizedBox(height: 24),
-                const Text(
-                  'ScanVault',
-                  style: TextStyle(
-                    fontSize: 48,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                const Text(
-                  'Professional Document Scanner',
-                  style: TextStyle(
-                    fontSize: 18,
-                    color: Colors.white70,
-                  ),
-                ),
-                const SizedBox(height: 60),
-                ElevatedButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => CameraScreen(camera: camera),
-                      ),
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    foregroundColor: Colors.blue.shade900,
-                    padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                  ),
-                  child: const Text(
-                    'Start Scanning',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                TextButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const DocumentsScreen(),
-                      ),
-                    );
-                  },
-                  child: const Text(
-                    'My Documents',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.white,
-                      decoration: TextDecoration.underline,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
+      home: const HomeScreen(),
     );
   }
 }

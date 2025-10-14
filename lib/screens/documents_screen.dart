@@ -1,10 +1,11 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:open_file/open_file.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'pdf_preview_screen.dart';
+import 'camera_screen.dart';
 import '../ad_helper.dart';
 
 class DocumentsScreen extends StatefulWidget {
@@ -24,7 +25,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
   bool isSelectionMode = false;
   Set<String> selectedDocuments = {};
   TextEditingController searchController = TextEditingController();
-  
+
   BannerAd? _bannerAd;
   bool _isBannerAdLoaded = false;
 
@@ -54,7 +55,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
 
   void _filterDocuments() {
     final query = searchController.text.toLowerCase();
-    
+
     if (query.isEmpty) {
       setState(() {
         filteredDocuments = documents;
@@ -117,14 +118,14 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
       for (final path in selectedDocuments) {
         await File(path).delete();
       }
-      
+
       setState(() {
         isSelectionMode = false;
         selectedDocuments.clear();
       });
-      
+
       _loadDocuments();
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -164,21 +165,21 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
     if (targetFolder != null) {
       try {
         final appDir = await getApplicationDocumentsDirectory();
-        
+
         for (final path in selectedDocuments) {
           final fileName = path.split('/').last;
           final newPath = '${appDir.path}/documents/$targetFolder/$fileName';
           await File(path).copy(newPath);
           await File(path).delete();
         }
-        
+
         setState(() {
           isSelectionMode = false;
           selectedDocuments.clear();
         });
-        
+
         _loadDocuments();
-        
+
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -204,14 +205,14 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
     try {
       final appDir = await getApplicationDocumentsDirectory();
       final docsDir = Directory('${appDir.path}/documents');
-      
+
       if (await docsDir.exists()) {
         final entities = docsDir.listSync();
         final folderNames = entities
             .whereType<Directory>()
             .map((d) => d.path.split('/').last)
             .toList();
-        
+
         setState(() {
           folders = ['All Documents', ...folderNames];
         });
@@ -229,10 +230,10 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
     try {
       final appDir = await getApplicationDocumentsDirectory();
       final docsDir = Directory('${appDir.path}/documents');
-      
+
       if (await docsDir.exists()) {
         List<FileSystemEntity> allFiles = [];
-        
+
         if (selectedFolder == 'All Documents') {
           allFiles = await _getAllPdfs(docsDir);
         } else {
@@ -244,11 +245,11 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
                 .toList();
           }
         }
-        
-        allFiles.sort((a, b) => 
+
+        allFiles.sort((a, b) =>
           b.statSync().modified.compareTo(a.statSync().modified)
         );
-        
+
         setState(() {
           documents = allFiles;
           filteredDocuments = allFiles;
@@ -268,19 +269,19 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
 
   Future<List<FileSystemEntity>> _getAllPdfs(Directory dir) async {
     List<FileSystemEntity> pdfs = [];
-    
+
     await for (var entity in dir.list(recursive: true)) {
       if (entity is File && entity.path.endsWith('.pdf')) {
         pdfs.add(entity);
       }
     }
-    
+
     return pdfs;
   }
 
   Future<void> _createFolder() async {
     final controller = TextEditingController();
-    
+
     final folderName = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
@@ -311,9 +312,9 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
         final appDir = await getApplicationDocumentsDirectory();
         final folderDir = Directory('${appDir.path}/documents/$folderName');
         await folderDir.create(recursive: true);
-        
+
         await _loadFolders();
-        
+
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -335,9 +336,20 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
     }
   }
 
+  Future<void> _startScanning() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const CameraScreen(camera: null),
+      ),
+    );
+    // Refresh documents list when returning from scan
+    _loadDocuments();
+  }
+
   Future<void> _previewDocument(FileSystemEntity doc) async {
     final fileName = doc.path.split('/').last.replaceAll('.pdf', '');
-    
+
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -355,7 +367,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
         [XFile(doc.path)],
         text: 'Sharing document: ',
       );
-      
+
       if (result.status == ShareResultStatus.success && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -379,7 +391,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
   Future<void> _renameDocument(FileSystemEntity doc) async {
     final currentName = doc.path.split('/').last.replaceAll('.pdf', '');
     final controller = TextEditingController(text: currentName);
-    
+
     final newName = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
@@ -409,10 +421,10 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
       try {
         final directory = doc.parent.path;
         final newPath = '$directory/$newName.pdf';
-        
+
         await (doc as File).rename(newPath);
         _loadDocuments();
-        
+
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -436,7 +448,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
 
   Future<void> _moveToFolder(FileSystemEntity doc) async {
     final fileName = doc.path.split('/').last;
-    
+
     final targetFolder = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
@@ -467,9 +479,9 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
         final newPath = '${appDir.path}/documents/$targetFolder/$fileName';
         await (doc as File).copy(newPath);
         await doc.delete();
-        
+
         _loadDocuments();
-        
+
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -609,7 +621,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
                 itemBuilder: (context, index) {
                   final folder = folders[index];
                   final isSelected = folder == selectedFolder;
-                  
+
                   return Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: ChoiceChip(
@@ -621,7 +633,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
                         });
                         _loadDocuments();
                       },
-                      avatar: folder != 'All Documents' 
+                      avatar: folder != 'All Documents'
                           ? const Icon(Icons.folder, size: 18)
                           : null,
                     ),
@@ -640,7 +652,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
                             Icon(Icons.folder_open, size: 80, color: Colors.grey[400]),
                             const SizedBox(height: 16),
                             Text(
-                              searchController.text.isNotEmpty 
+                              searchController.text.isNotEmpty
                                   ? 'No documents found'
                                   : 'No documents yet',
                               style: TextStyle(fontSize: 18, color: Colors.grey[600]),
@@ -663,7 +675,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
                           final stat = doc.statSync();
                           final date = stat.modified;
                           final isSelected = selectedDocuments.contains(doc.path);
-                          
+
                           return Card(
                             margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                             color: isSelected ? Colors.blue[50] : null,
@@ -767,6 +779,12 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
               child: AdWidget(ad: _bannerAd!),
             ),
         ],
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _startScanning,
+        backgroundColor: Colors.blue,
+        icon: const Icon(Icons.document_scanner, color: Colors.white),
+        label: const Text('Start Scanning', style: TextStyle(color: Colors.white)),
       ),
     );
   }

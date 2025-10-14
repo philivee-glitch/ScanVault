@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:cunning_document_scanner/cunning_document_scanner.dart';
 import 'enhancement_screen.dart';

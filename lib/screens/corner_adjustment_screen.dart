@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:image/image.dart' as img;
 import 'package:path_provider/path_provider.dart';
@@ -309,7 +309,7 @@ class _CornerAdjustmentScreenState extends State<CornerAdjustmentScreen> {
                                 borderRadius: BorderRadius.circular(20),
                               ),
                               child: const Text(
-                                'Drag corners to document edges • Tap 👁 to preview',
+                                'Drag corners to document edges � Tap ?? to preview',
                                 style: TextStyle(color: Colors.white, fontSize: 12),
                               ),
                             ),
