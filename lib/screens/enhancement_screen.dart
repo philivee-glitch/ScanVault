@@ -5,7 +5,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
-import '../ad_helper.dart';
+import '../subscription_manager.dart';
 
 enum FilterType { original, blackWhite, grayscale, colorEnhanced }
 
@@ -182,6 +182,9 @@ class _EnhancementScreenState extends State<EnhancementScreen> {
       
       processedPages[currentPageIndex] = displayImagePath!;
       
+      // Check if user is premium
+      final isPremium = await SubscriptionManager.isPremium();
+      
       final pdf = pw.Document();
       
       for (final pagePath in processedPages) {
@@ -198,7 +201,31 @@ class _EnhancementScreenState extends State<EnhancementScreen> {
               pageFormat: PdfPageFormat(pageWidth, pageHeight),
               margin: pw.EdgeInsets.zero,
               build: (pw.Context context) {
-                return pw.Image(image, fit: pw.BoxFit.fill);
+                return pw.Stack(
+                  children: [
+                    // Main image
+                    pw.Image(image, fit: pw.BoxFit.fill),
+                    
+                    // Watermark for free users - "SV" at bottom-right
+                    if (!isPremium)
+                      pw.Positioned(
+                        bottom: 40,
+                        right: 40,
+                        child: pw.Opacity(
+                          opacity: 0.4,
+                          child: pw.Text(
+                            'SV',
+                            style: pw.TextStyle(
+                              color: PdfColors.grey800,
+                              fontSize: 100,
+                              fontWeight: pw.FontWeight.bold,
+                              letterSpacing: 4,
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                );
               },
             ),
           );
@@ -210,17 +237,7 @@ class _EnhancementScreenState extends State<EnhancementScreen> {
       
       if (!mounted) return;
       
-      final folderMsg = targetFolder.isEmpty ? '' : ' to $targetFolder';
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Document saved$folderMsg ( page)'),
-          backgroundColor: Colors.green,
-        ),
-      );
-      
-      // Show interstitial ad after saving document (frequency-capped: every 3rd save)
-      AdHelper.showInterstitialAdAfterSave();
-      
+      // Go back to home screen
       Navigator.popUntil(context, (route) => route.isFirst);
       
     } catch (e) {
@@ -230,6 +247,7 @@ class _EnhancementScreenState extends State<EnhancementScreen> {
         SnackBar(
           content: Text('Error: $e'),
           backgroundColor: Colors.red,
+          duration: const Duration(seconds: 3),
         ),
       );
     } finally {
@@ -256,7 +274,7 @@ class _EnhancementScreenState extends State<EnhancementScreen> {
       appBar: AppBar(
         backgroundColor: Colors.black,
         foregroundColor: Colors.white,
-        title: Text(pageCount > 1 ? 'Page  of $pageCount' : 'Enhance'),
+        title: Text(pageCount > 1 ? 'Page ${currentPageIndex + 1} of $pageCount' : 'Enhance'),
         actions: [
           if (pageCount > 1)
             Padding(

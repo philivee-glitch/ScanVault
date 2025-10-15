@@ -1,23 +1,24 @@
 {
   "roots": [
-    "doc_scanner_app"
+    "scanvault_premium"
   ],
   "packages": [
     {
-      "name": "doc_scanner_app",
+      "name": "scanvault_premium",
       "version": "1.0.0+1",
       "dependencies": [
         "camera",
         "cunning_document_scanner",
         "flutter",
         "flutter_pdfview",
-        "google_mobile_ads",
         "image",
+        "in_app_purchase",
         "open_file",
         "path_provider",
         "pdf",
         "printing",
         "share_plus",
+        "shared_preferences",
         "vector_math"
       ],
       "devDependencies": [
@@ -51,14 +52,26 @@
       ]
     },
     {
-      "name": "google_mobile_ads",
-      "version": "5.3.1",
+      "name": "in_app_purchase",
+      "version": "3.2.3",
       "dependencies": [
         "flutter",
-        "meta",
-        "webview_flutter",
-        "webview_flutter_android",
-        "webview_flutter_wkwebview"
+        "in_app_purchase_android",
+        "in_app_purchase_platform_interface",
+        "in_app_purchase_storekit"
+      ]
+    },
+    {
+      "name": "shared_preferences",
+      "version": "2.5.3",
+      "dependencies": [
+        "flutter",
+        "shared_preferences_android",
+        "shared_preferences_foundation",
+        "shared_preferences_linux",
+        "shared_preferences_platform_interface",
+        "shared_preferences_web",
+        "shared_preferences_windows"
       ]
     },
     {
@@ -278,32 +291,88 @@
       ]
     },
     {
-      "name": "webview_flutter",
-      "version": "4.13.0",
+      "name": "in_app_purchase_storekit",
+      "version": "0.4.6",
       "dependencies": [
+        "collection",
         "flutter",
-        "webview_flutter_android",
-        "webview_flutter_platform_interface",
-        "webview_flutter_wkwebview"
+        "in_app_purchase_platform_interface",
+        "json_annotation"
       ]
     },
     {
-      "name": "webview_flutter_wkwebview",
-      "version": "3.23.1",
+      "name": "in_app_purchase_platform_interface",
+      "version": "1.4.0",
       "dependencies": [
         "flutter",
-        "meta",
+        "plugin_platform_interface"
+      ]
+    },
+    {
+      "name": "in_app_purchase_android",
+      "version": "0.4.0+5",
+      "dependencies": [
+        "collection",
+        "flutter",
+        "in_app_purchase_platform_interface"
+      ]
+    },
+    {
+      "name": "shared_preferences_windows",
+      "version": "2.4.1",
+      "dependencies": [
+        "file",
+        "flutter",
         "path",
-        "webview_flutter_platform_interface"
+        "path_provider_platform_interface",
+        "path_provider_windows",
+        "shared_preferences_platform_interface"
       ]
     },
     {
-      "name": "webview_flutter_android",
-      "version": "4.10.3",
+      "name": "shared_preferences_web",
+      "version": "2.4.3",
       "dependencies": [
         "flutter",
-        "meta",
-        "webview_flutter_platform_interface"
+        "flutter_web_plugins",
+        "shared_preferences_platform_interface",
+        "web"
+      ]
+    },
+    {
+      "name": "shared_preferences_platform_interface",
+      "version": "2.4.1",
+      "dependencies": [
+        "flutter",
+        "plugin_platform_interface"
+      ]
+    },
+    {
+      "name": "shared_preferences_linux",
+      "version": "2.4.1",
+      "dependencies": [
+        "file",
+        "flutter",
+        "path",
+        "path_provider_linux",
+        "path_provider_platform_interface",
+        "shared_preferences_platform_interface"
+      ]
+    },
+    {
+      "name": "shared_preferences_foundation",
+      "version": "2.5.4",
+      "dependencies": [
+        "flutter",
+        "shared_preferences_platform_interface"
+      ]
+    },
+    {
+      "name": "shared_preferences_android",
+      "version": "2.4.15",
+      "dependencies": [
+        "flutter",
+        "shared_preferences_platform_interface"
       ]
     },
     {
@@ -720,12 +789,10 @@
       ]
     },
     {
-      "name": "webview_flutter_platform_interface",
-      "version": "2.14.0",
+      "name": "json_annotation",
+      "version": "4.9.0",
       "dependencies": [
-        "flutter",
-        "meta",
-        "plugin_platform_interface"
+        "meta"
       ]
     },
     {

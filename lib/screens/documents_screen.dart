@@ -3,10 +3,8 @@ import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:open_file/open_file.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'pdf_preview_screen.dart';
 import 'camera_screen.dart';
-import '../ad_helper.dart';
 
 class DocumentsScreen extends StatefulWidget {
   const DocumentsScreen({super.key});
@@ -26,30 +24,17 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
   Set<String> selectedDocuments = {};
   TextEditingController searchController = TextEditingController();
 
-  BannerAd? _bannerAd;
-  bool _isBannerAdLoaded = false;
-
   @override
   void initState() {
     super.initState();
     _loadFolders();
     _loadDocuments();
     searchController.addListener(_filterDocuments);
-    _loadBannerAd();
-    AdHelper.loadInterstitialAd();
-  }
-
-  void _loadBannerAd() {
-    _bannerAd = AdHelper.loadBannerAd();
-    setState(() {
-      _isBannerAdLoaded = true;
-    });
   }
 
   @override
   void dispose() {
     searchController.dispose();
-    _bannerAd?.dispose();
     super.dispose();
   }
 
@@ -343,7 +328,6 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
         builder: (context) => const CameraScreen(camera: null),
       ),
     );
-    // Refresh documents list when returning from scan
     _loadDocuments();
   }
 
@@ -772,12 +756,6 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
                         },
                       ),
           ),
-          if (_isBannerAdLoaded && _bannerAd != null)
-            Container(
-              height: 50,
-              alignment: Alignment.center,
-              child: AdWidget(ad: _bannerAd!),
-            ),
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(

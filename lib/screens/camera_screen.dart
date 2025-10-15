@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:cunning_document_scanner/cunning_document_scanner.dart';
 import 'enhancement_screen.dart';
+import '../subscription_manager.dart';
 
 class CameraScreen extends StatefulWidget {
   final dynamic camera;
@@ -28,6 +29,9 @@ class _CameraScreenState extends State<CameraScreen> {
         }
         return;
       }
+      
+      // Increment scan count for free users
+      await SubscriptionManager.incrementScanCount();
       
       setState(() {
         scannedPages.addAll(pictures);
@@ -73,7 +77,7 @@ class _CameraScreenState extends State<CameraScreen> {
           ? AppBar(
               backgroundColor: Colors.black,
               foregroundColor: Colors.white,
-              title: Text(' page scanned'),
+              title: Text('${scannedPages.length} page${scannedPages.length > 1 ? 's' : ''} scanned'),
             )
           : null,
       body: scannedPages.isEmpty
@@ -95,7 +99,7 @@ class _CameraScreenState extends State<CameraScreen> {
                             height: 80,
                             fit: BoxFit.cover,
                           ),
-                          title: Text('Page '),
+                          title: Text('Page ${index + 1}'),
                           trailing: IconButton(
                             icon: const Icon(Icons.delete, color: Colors.red),
                             onPressed: () {
