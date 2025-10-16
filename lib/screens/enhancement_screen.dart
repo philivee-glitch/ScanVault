@@ -1,393 +1,95 @@
-import 'package:flutter/material.dart';
 import 'dart:io';
-import 'package:image/image.dart' as img;
+import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
-import 'package:printing/printing.dart';
+import 'package:image/image.dart' as img;
 import '../subscription_manager.dart';
-
-enum FilterType { original, blackWhite, grayscale, colorEnhanced }
+import 'document_analysis_screen.dart';
+import 'documents_screen.dart';
+import 'pdf_preview_screen.dart';
 
 class EnhancementScreen extends StatefulWidget {
   final String imagePath;
-  final List<String>? allPages;
+  final List<String>? additionalPages;
 
   const EnhancementScreen({
-    super.key, 
+    Key? key,
     required this.imagePath,
-    this.allPages,
-  });
+    this.additionalPages,
+  }) : super(key: key);
 
   @override
   State<EnhancementScreen> createState() => _EnhancementScreenState();
 }
 
 class _EnhancementScreenState extends State<EnhancementScreen> {
-  FilterType selectedFilter = FilterType.original;
-  double brightness = 0;
-  double contrast = 100;
-  int rotation = 0;
-  img.Image? originalImage;
-  String? displayImagePath;
-  bool isProcessing = false;
-  bool showAdvanced = false;
-  int currentPageIndex = 0;
-  List<String> processedPages = [];
+  final SubscriptionManager _subscriptionManager = SubscriptionManager();
+  
+  String _currentFilter = 'Original';
+  double _brightness = 0.0;
+  double _contrast = 1.0;
+  int _rotation = 0;
+  bool _isProcessing = false;
+  String? _processedImagePath;
+  
+  final List<String> _filters = ['Original', 'B&W', 'Grayscale', 'Color+'];
 
   @override
   void initState() {
     super.initState();
-    if (widget.allPages != null) {
-      processedPages = List.from(widget.allPages!);
-      currentPageIndex = processedPages.length - 1;
-    }
-    _loadImage();
-  }
-
-  Future<void> _loadImage() async {
-    final bytes = await File(widget.imagePath).readAsBytes();
-    final image = img.decodeImage(bytes);
-    
-    if (image != null) {
-      setState(() {
-        originalImage = image;
-        displayImagePath = widget.imagePath;
-      });
-    }
-  }
-
-  Future<void> _updatePreview() async {
-    if (originalImage == null) return;
-    
-    setState(() {
-      isProcessing = true;
-    });
-
-    img.Image result = img.Image.from(originalImage!);
-    
-    if (rotation != 0) {
-      result = img.copyRotate(result, angle: rotation);
-    }
-    
-    switch (selectedFilter) {
-      case FilterType.blackWhite:
-        result = img.grayscale(result);
-        result = img.contrast(result, contrast: 150);
-        break;
-      case FilterType.grayscale:
-        result = img.grayscale(result);
-        break;
-      case FilterType.colorEnhanced:
-        result = img.adjustColor(result, saturation: 1.5, contrast: 1.2, brightness: 1.1);
-        break;
-      case FilterType.original:
-        break;
-    }
-    
-    if (contrast != 100 && selectedFilter == FilterType.original) {
-      result = img.contrast(result, contrast: contrast);
-    }
-    
-    if (brightness != 0) {
-      final brightnessValue = brightness.toInt();
-      for (int y = 0; y < result.height; y++) {
-        for (int x = 0; x < result.width; x++) {
-          final pixel = result.getPixel(x, y);
-          final r = (pixel.r + brightnessValue).clamp(0, 255).toInt();
-          final g = (pixel.g + brightnessValue).clamp(0, 255).toInt();
-          final b = (pixel.b + brightnessValue).clamp(0, 255).toInt();
-          result.setPixelRgba(x, y, r, g, b, pixel.a.toInt());
-        }
-      }
-    }
-    
-    final tempDir = await getTemporaryDirectory();
-    final path = '${tempDir.path}/processed_${DateTime.now().millisecondsSinceEpoch}.jpg';
-    File(path).writeAsBytesSync(img.encodeJpg(result, quality: 95));
-    
-    setState(() {
-      displayImagePath = path;
-      isProcessing = false;
-    });
-  }
-
-  Future<List<String>> _getFolders() async {
-    try {
-      final appDir = await getApplicationDocumentsDirectory();
-      final docsDir = Directory('${appDir.path}/documents');
-      
-      if (await docsDir.exists()) {
-        final entities = docsDir.listSync();
-        return entities
-            .whereType<Directory>()
-            .map((d) => d.path.split('/').last)
-            .toList();
-      }
-    } catch (e) {
-      // Return empty list on error
-    }
-    return [];
-  }
-
-  Future<void> _saveDocument() async {
-    if (displayImagePath == null) return;
-
-    final folders = await _getFolders();
-    
-    String? targetFolder;
-    
-    if (folders.isNotEmpty && mounted) {
-      targetFolder = await showDialog<String>(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Save to Folder'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                leading: const Icon(Icons.folder_open),
-                title: const Text('Root (No folder)'),
-                onTap: () => Navigator.pop(context, ''),
-              ),
-              ...folders.map((folder) => ListTile(
-                    leading: const Icon(Icons.folder),
-                    title: Text(folder),
-                    onTap: () => Navigator.pop(context, folder),
-                  )),
-            ],
-          ),
-        ),
-      );
-      
-      if (targetFolder == null) return;
-    } else {
-      targetFolder = '';
-    }
-    
-    setState(() {
-      isProcessing = true;
-    });
-
-    try {
-      final appDir = await getApplicationDocumentsDirectory();
-      final docsDir = Directory('${appDir.path}/documents');
-      if (!await docsDir.exists()) {
-        await docsDir.create(recursive: true);
-      }
-      
-      final savePath = targetFolder.isEmpty 
-          ? docsDir.path 
-          : '${docsDir.path}/$targetFolder';
-      
-      processedPages[currentPageIndex] = displayImagePath!;
-      
-      // Check if user is premium
-      final isPremium = await SubscriptionManager.isPremium();
-      
-      final pdf = pw.Document();
-      
-      for (final pagePath in processedPages) {
-        final imageBytes = await File(pagePath).readAsBytes();
-        final image = pw.MemoryImage(imageBytes);
-        
-        final img.Image? imgData = img.decodeImage(imageBytes);
-        if (imgData != null) {
-          final pageWidth = imgData.width.toDouble();
-          final pageHeight = imgData.height.toDouble();
-          
-          pdf.addPage(
-            pw.Page(
-              pageFormat: PdfPageFormat(pageWidth, pageHeight),
-              margin: pw.EdgeInsets.zero,
-              build: (pw.Context context) {
-                return pw.Stack(
-                  children: [
-                    // Main image
-                    pw.Image(image, fit: pw.BoxFit.fill),
-                    
-                    // Watermark for free users - "SV" at bottom-right
-                    if (!isPremium)
-                      pw.Positioned(
-                        bottom: 40,
-                        right: 40,
-                        child: pw.Opacity(
-                          opacity: 0.4,
-                          child: pw.Text(
-                            'SV',
-                            style: pw.TextStyle(
-                              color: PdfColors.grey800,
-                              fontSize: 100,
-                              fontWeight: pw.FontWeight.bold,
-                              letterSpacing: 4,
-                            ),
-                          ),
-                        ),
-                      ),
-                  ],
-                );
-              },
-            ),
-          );
-        }
-      }
-      
-      final pdfPath = '$savePath/doc_${DateTime.now().millisecondsSinceEpoch}.pdf';
-      await File(pdfPath).writeAsBytes(await pdf.save());
-      
-      if (!mounted) return;
-      
-      // Go back to home screen
-      Navigator.popUntil(context, (route) => route.isFirst);
-      
-    } catch (e) {
-      if (!mounted) return;
-      
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error: $e'),
-          backgroundColor: Colors.red,
-          duration: const Duration(seconds: 3),
-        ),
-      );
-    } finally {
-      setState(() {
-        isProcessing = false;
-      });
-    }
-  }
-
-  void _rotateImage() {
-    setState(() {
-      rotation = (rotation + 90) % 360;
-    });
-    _updatePreview();
+    _processedImagePath = widget.imagePath;
   }
 
   @override
   Widget build(BuildContext context) {
-    final bottomPadding = MediaQuery.of(context).padding.bottom;
-    final pageCount = processedPages.length;
-    
     return Scaffold(
-      backgroundColor: Colors.black,
       appBar: AppBar(
-        backgroundColor: Colors.black,
-        foregroundColor: Colors.white,
-        title: Text(pageCount > 1 ? 'Page ${currentPageIndex + 1} of $pageCount' : 'Enhance'),
+        title: Text('Enhance Document'),
         actions: [
-          if (pageCount > 1)
-            Padding(
-              padding: const EdgeInsets.only(right: 8),
-              child: Center(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: Colors.blue,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    '$pageCount pages',
-                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
-            ),
           IconButton(
-            icon: const Icon(Icons.check_circle),
-            onPressed: isProcessing ? null : _saveDocument,
-            tooltip: 'Save PDF',
+            icon: Icon(Icons.check),
+            onPressed: _isProcessing ? null : _showSaveOptions,
           ),
         ],
       ),
       body: Column(
         children: [
+          // Image preview
           Expanded(
+            flex: 2,
             child: Container(
-              color: Colors.black,
+              color: Colors.grey[200],
               child: Center(
-                child: isProcessing
-                    ? const CircularProgressIndicator(color: Colors.white)
-                    : displayImagePath != null
-                        ? Image.file(File(displayImagePath!), fit: BoxFit.contain)
-                        : Container(),
+                child: _isProcessing
+                    ? CircularProgressIndicator()
+                    : _processedImagePath != null
+                        ? Image.file(
+                            File(_processedImagePath!),
+                            fit: BoxFit.contain,
+                          )
+                        : Icon(Icons.image, size: 100, color: Colors.grey),
               ),
             ),
           ),
           
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            color: Colors.grey[900],
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                _buildFilterChip('Original', FilterType.original),
-                _buildFilterChip('B&W', FilterType.blackWhite),
-                _buildFilterChip('Gray', FilterType.grayscale),
-                _buildFilterChip('Color+', FilterType.colorEnhanced),
-              ],
-            ),
-          ),
-          
-          Container(
-            color: Colors.grey[850],
-            padding: EdgeInsets.only(bottom: bottomPadding),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      _buildQuickAction(
-                        Icons.rotate_right,
-                        'Rotate',
-                        _rotateImage,
-                      ),
-                      _buildQuickAction(
-                        showAdvanced ? Icons.expand_less : Icons.tune,
-                        showAdvanced ? 'Less' : 'Adjust',
-                        () {
-                          setState(() {
-                            showAdvanced = !showAdvanced;
-                          });
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-                
-                if (showAdvanced)
-                  Container(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                    child: Column(
-                      children: [
-                        const Divider(color: Colors.grey),
-                        const SizedBox(height: 8),
-                        _buildSlider(
-                          'Brightness',
-                          Icons.brightness_6,
-                          brightness,
-                          -50,
-                          50,
-                          (value) => setState(() => brightness = value),
-                          _updatePreview,
-                        ),
-                        const SizedBox(height: 8),
-                        _buildSlider(
-                          'Contrast',
-                          Icons.contrast,
-                          contrast,
-                          50,
-                          150,
-                          (value) => setState(() => contrast = value),
-                          _updatePreview,
-                        ),
-                      ],
-                    ),
-                  ),
-              ],
+          // Controls
+          Expanded(
+            flex: 3,
+            child: SingleChildScrollView(
+              padding: EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildFilterSelector(),
+                  SizedBox(height: 16),
+                  _buildBrightnessControl(),
+                  SizedBox(height: 16),
+                  _buildContrastControl(),
+                  SizedBox(height: 16),
+                  _buildRotationControl(),
+                ],
+              ),
             ),
           ),
         ],
@@ -395,103 +97,412 @@ class _EnhancementScreenState extends State<EnhancementScreen> {
     );
   }
 
-  Widget _buildFilterChip(String label, FilterType filter) {
-    final isSelected = selectedFilter == filter;
-    
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          selectedFilter = filter;
-        });
-        _updatePreview();
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          color: isSelected ? Colors.blue : Colors.grey[800],
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: isSelected ? Colors.blue : Colors.transparent,
-            width: 2,
-          ),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-            fontSize: 13,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildQuickAction(IconData icon, String label, VoidCallback onTap) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-        decoration: BoxDecoration(
-          color: Colors.grey[800],
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, color: Colors.white, size: 24),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: const TextStyle(color: Colors.white, fontSize: 12),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSlider(
-    String label,
-    IconData icon,
-    double value,
-    double min,
-    double max,
-    ValueChanged<double> onChanged,
-    VoidCallback onChangeEnd,
-  ) {
+  Widget _buildFilterSelector() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        Text('Filter', style: TextStyle(fontWeight: FontWeight.bold)),
+        SizedBox(height: 8),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: _filters.map((filter) {
+              final isSelected = _currentFilter == filter;
+              return Padding(
+                padding: EdgeInsets.only(right: 8),
+                child: ChoiceChip(
+                  label: Text(filter),
+                  selected: isSelected,
+                  onSelected: (selected) {
+                    if (selected) {
+                      setState(() => _currentFilter = filter);
+                      _applyEnhancements();
+                    }
+                  },
+                ),
+              );
+            }).toList(),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBrightnessControl() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Brightness', style: TextStyle(fontWeight: FontWeight.bold)),
+        Slider(
+          value: _brightness,
+          min: -100,
+          max: 100,
+          divisions: 40,
+          label: _brightness.round().toString(),
+          onChanged: (value) {
+            setState(() => _brightness = value);
+          },
+          onChangeEnd: (value) => _applyEnhancements(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildContrastControl() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Contrast', style: TextStyle(fontWeight: FontWeight.bold)),
+        Slider(
+          value: _contrast,
+          min: 0.5,
+          max: 2.0,
+          divisions: 30,
+          label: _contrast.toStringAsFixed(1),
+          onChanged: (value) {
+            setState(() => _contrast = value);
+          },
+          onChangeEnd: (value) => _applyEnhancements(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRotationControl() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Rotation', style: TextStyle(fontWeight: FontWeight.bold)),
+        SizedBox(height: 8),
         Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            Icon(icon, color: Colors.white70, size: 18),
-            const SizedBox(width: 8),
-            Text(
-              label,
-              style: const TextStyle(color: Colors.white70, fontSize: 13),
+            ElevatedButton.icon(
+              onPressed: () {
+                setState(() => _rotation = (_rotation - 90) % 360);
+                _applyEnhancements();
+              },
+              icon: Icon(Icons.rotate_left),
+              label: Text('Rotate Left'),
             ),
-            const Spacer(),
-            Text(
-              value.toInt().toString(),
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 14,
-              ),
+            ElevatedButton.icon(
+              onPressed: () {
+                setState(() => _rotation = (_rotation + 90) % 360);
+                _applyEnhancements();
+              },
+              icon: Icon(Icons.rotate_right),
+              label: Text('Rotate Right'),
             ),
           ],
         ),
-        Slider(
-          value: value,
-          min: min,
-          max: max,
-          divisions: (max - min).toInt(),
-          onChanged: onChanged,
-          onChangeEnd: (val) => onChangeEnd(),
-        ),
       ],
+    );
+  }
+
+  Future<void> _applyEnhancements() async {
+    setState(() => _isProcessing = true);
+
+    try {
+      final bytes = await File(widget.imagePath).readAsBytes();
+      img.Image? image = img.decodeImage(bytes);
+
+      if (image == null) return;
+
+      if (_rotation != 0) {
+        image = img.copyRotate(image, angle: _rotation.toDouble());
+      }
+
+      switch (_currentFilter) {
+        case 'B&W':
+          image = img.grayscale(image);
+          image = img.contrast(image, contrast: 150);
+          break;
+        case 'Grayscale':
+          image = img.grayscale(image);
+          break;
+        case 'Color+':
+          image = img.adjustColor(image, saturation: 1.3);
+          break;
+      }
+
+      // Apply brightness with asymmetric scaling (more aggressive positive, gentle negative)
+      if (_brightness != 0) {
+        double brightnessValue;
+        if (_brightness > 0) {
+          // Positive: 0 to +100 becomes 0 to +2.0 (aggressive brightening)
+          brightnessValue = _brightness / 50;
+        } else {
+          // Negative: -100 to 0 becomes -0.5 to 0 (gentle darkening, won't go fully black)
+          brightnessValue = _brightness / 200;
+        }
+        image = img.adjustColor(image, brightness: brightnessValue);
+      }
+
+      // Apply contrast separately
+      if (_contrast != 1.0) {
+        image = img.adjustColor(image, contrast: _contrast);
+      }
+
+      final tempDir = await getTemporaryDirectory();
+      final processedFile = File('${tempDir.path}/processed_${DateTime.now().millisecondsSinceEpoch}.jpg');
+      await processedFile.writeAsBytes(img.encodeJpg(image));
+
+      setState(() {
+        _processedImagePath = processedFile.path;
+        _isProcessing = false;
+      });
+    } catch (e) {
+      debugPrint('Enhancement error: $e');
+      setState(() => _isProcessing = false);
+    }
+  }
+
+  Future<void> _showSaveOptions() async {
+    final directory = await getApplicationDocumentsDirectory();
+    final docDir = Directory('${directory.path}/documents');
+    
+    if (!await docDir.exists()) {
+      await docDir.create(recursive: true);
+    }
+
+    // Load available folders
+    final folders = <String>[];
+    await for (var entity in docDir.list()) {
+      if (entity is Directory) {
+        folders.add(entity.path.split('/').last.split('\\').last);
+      }
+    }
+
+    if (!mounted) return;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            Expanded(child: Text('Save Document')),
+            IconButton(
+              icon: Icon(Icons.close, size: 20),
+              onPressed: () => Navigator.pop(context),
+              tooltip: 'Cancel',
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Choose where to save:'),
+            SizedBox(height: 16),
+            ListTile(
+              leading: Icon(Icons.folder_outlined, color: Colors.blue),
+              title: Text('Documents (Root)'),
+              onTap: () {
+                Navigator.pop(context);
+                _savePDF(null);
+              },
+            ),
+            if (folders.isNotEmpty) ...[
+              Divider(),
+              ...folders.map((folder) => ListTile(
+                leading: Icon(Icons.folder, color: Colors.orange),
+                title: Text(folder),
+                onTap: () {
+                  Navigator.pop(context);
+                  _savePDF(folder);
+                },
+              )),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _savePDF(String? folderName) async {
+    if (_processedImagePath == null) return;
+
+    setState(() => _isProcessing = true);
+
+    try {
+      final pdf = pw.Document();
+      final allPages = [_processedImagePath!, ...(widget.additionalPages ?? [])];
+      
+      // Add each page with watermark overlay for free users
+      for (String pagePath in allPages) {
+        final imageBytes = await File(pagePath).readAsBytes();
+        final image = pw.MemoryImage(imageBytes);
+
+        pdf.addPage(
+          pw.Page(
+            pageFormat: PdfPageFormat.a4,
+            build: (pw.Context context) {
+              return pw.Stack(
+                children: [
+                  // Document image
+                  pw.Center(
+                    child: pw.Image(image, fit: pw.BoxFit.contain),
+                  ),
+                  
+                  // Watermark overlay for free users
+                  if (!_subscriptionManager.isPremium)
+                    pw.Positioned(
+                      bottom: 30,
+                      right: 30,
+                      child: pw.Opacity(
+                        opacity: 0.3,
+                        child: pw.Text(
+                          'ScanVault',
+                          style: pw.TextStyle(
+                            fontSize: 24,
+                            color: PdfColors.grey700,
+                            fontWeight: pw.FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              );
+            },
+          ),
+        );
+      }
+
+      final directory = await getApplicationDocumentsDirectory();
+      final savePath = folderName != null
+          ? '${directory.path}/documents/$folderName'
+          : '${directory.path}/documents';
+      
+      final saveDir = Directory(savePath);
+      if (!await saveDir.exists()) {
+        await saveDir.create(recursive: true);
+      }
+
+      final fileName = 'scan_${DateTime.now().millisecondsSinceEpoch}.pdf';
+      final file = File('$savePath/$fileName');
+      await file.writeAsBytes(await pdf.save());
+
+      setState(() => _isProcessing = false);
+
+      if (mounted) {
+        _showSuccessDialog(file.path, fileName, folderName);
+      }
+    } catch (e) {
+      debugPrint('Save PDF error: $e');
+      setState(() => _isProcessing = false);
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error saving PDF: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  void _showSuccessDialog(String pdfPath, String fileName, String? folderName) {
+    showDialog(
+      context: context,
+      barrierDismissible: true, // Allow tapping outside to close
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(Icons.check_circle, color: Colors.green),
+            SizedBox(width: 8),
+            Expanded(child: Text('PDF Saved!')),
+            IconButton(
+              icon: Icon(Icons.close, size: 20),
+              onPressed: () {
+                Navigator.pop(context); // Close dialog
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => DocumentsScreen()),
+                );
+              },
+              tooltip: 'Close',
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Your document has been saved successfully.'),
+            if (folderName != null) ...[
+              SizedBox(height: 8),
+              Container(
+                padding: EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.orange.shade50,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.folder, size: 16, color: Colors.orange),
+                    SizedBox(width: 8),
+                    Text(
+                      'Saved in: $folderName',
+                      style: TextStyle(fontSize: 12),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+            SizedBox(height: 16),
+            Text(
+              'What would you like to do next?',
+              style: TextStyle(fontWeight: FontWeight.w500),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context); // Close dialog
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => DocumentsScreen()),
+              );
+            },
+            child: Text('Done'),
+          ),
+          TextButton.icon(
+            onPressed: () {
+              Navigator.pop(context); // Close dialog
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => PdfPreviewScreen(pdfPath: pdfPath),
+                ),
+              );
+            },
+            icon: Icon(Icons.visibility),
+            label: Text('View PDF'),
+          ),
+          ElevatedButton.icon(
+            onPressed: () {
+              Navigator.pop(context); // Close dialog
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => DocumentAnalysisScreen(
+                    imagePath: _processedImagePath!,
+                    documentName: fileName,
+                  ),
+                ),
+              );
+            },
+            icon: Icon(Icons.text_fields),
+            label: Text('Extract Text'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.green,
+              foregroundColor: Colors.white,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

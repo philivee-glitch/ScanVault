@@ -1,162 +1,335 @@
 import 'package:flutter/material.dart';
-import 'dart:io';
+import 'package:camera/camera.dart';
 import 'package:cunning_document_scanner/cunning_document_scanner.dart';
-import 'enhancement_screen.dart';
+import 'dart:io';
 import '../subscription_manager.dart';
+import 'corner_adjustment_screen.dart';
+import 'enhancement_screen.dart';
 
 class CameraScreen extends StatefulWidget {
-  final dynamic camera;
-  
-  const CameraScreen({super.key, required this.camera});
+  const CameraScreen({Key? key}) : super(key: key);
 
   @override
   State<CameraScreen> createState() => _CameraScreenState();
 }
 
 class _CameraScreenState extends State<CameraScreen> {
-  List<String> scannedPages = [];
-  bool hasScanned = false;
-  
-  Future<void> _scanDocument() async {
-    try {
-      List<String> pictures = await CunningDocumentScanner.getPictures(
-        noOfPages: 10, // Allow up to 10 pages
-      ) ?? [];
-      
-      if (pictures.isEmpty) {
-        if (!hasScanned && mounted) {
-          Navigator.pop(context); // Go back if user cancelled on first scan
-        }
-        return;
-      }
-      
-      // Increment scan count for free users
-      await SubscriptionManager.incrementScanCount();
-      
-      setState(() {
-        scannedPages.addAll(pictures);
-        hasScanned = true;
-      });
-      
-      if (!mounted) return;
-      
-      // Go to enhancement with all scanned pages
-      await Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => EnhancementScreen(
-            imagePath: scannedPages.last,
-            allPages: scannedPages,
-          ),
-        ),
-      );
-      
-    } catch (e) {
-      if (!mounted) return;
-      
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    }
-  }
+  final SubscriptionManager _subscriptionManager = SubscriptionManager();
+  List<String> _scannedImages = [];
+  bool _isScanning = false;
 
   @override
   Widget build(BuildContext context) {
-    if (!hasScanned) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _scanDocument();
-      });
+    final isPremium = _subscriptionManager.isPremium;
+    
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Scan Document'),
+        actions: [
+          if (_scannedImages.isNotEmpty)
+            TextButton.icon(
+              onPressed: _finishScanning,
+              icon: Icon(Icons.check, color: Colors.white),
+              label: Text(
+                'Done (${_scannedImages.length})',
+                style: TextStyle(color: Colors.white),
+              ),
+            ),
+        ],
+      ),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.document_scanner,
+              size: 100,
+              color: Colors.blue,
+            ),
+            SizedBox(height: 24),
+            Text(
+              _scannedImages.isEmpty 
+                  ? 'Ready to Scan'
+                  : '${_scannedImages.length} page(s) scanned',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(height: 16),
+            Text(
+              'Position your document and tap the button',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.grey[600],
+              ),
+            ),
+            SizedBox(height: 32),
+            
+            // Main scan button
+            ElevatedButton.icon(
+              onPressed: _isScanning ? null : _scanDocument,
+              icon: Icon(Icons.camera_alt, size: 28),
+              label: Text(
+                _scannedImages.isEmpty ? 'Start Scanning' : 'Add Another Page',
+                style: TextStyle(fontSize: 18),
+              ),
+              style: ElevatedButton.styleFrom(
+                padding: EdgeInsets.symmetric(horizontal: 48, vertical: 20),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+            
+            // Premium badge if showing "Add Another Page" for free users
+            if (_scannedImages.isNotEmpty && !isPremium) ...[
+              SizedBox(height: 8),
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.amber.shade50,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.amber),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.workspace_premium, size: 16, color: Colors.amber.shade700),
+                    SizedBox(width: 4),
+                    Text(
+                      'Multi-page scanning requires Premium',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.amber.shade900,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+            
+            if (_scannedImages.isNotEmpty) ...[
+              SizedBox(height: 16),
+              OutlinedButton.icon(
+                onPressed: _finishScanning,
+                icon: Icon(Icons.check),
+                label: Text('Finish & Process'),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _scanDocument() async {
+    final isPremium = _subscriptionManager.isPremium;
+    
+    // Check if free user is trying to add a second page
+    if (!isPremium && _scannedImages.isNotEmpty) {
+      _showMultiPageUpgradeDialog();
+      return;
+    }
+    
+    // Check if user can scan BEFORE scanning
+    final canScan = await _subscriptionManager.canScanToday();
+    
+    if (!canScan) {
+      if (mounted) {
+        _showUpgradeDialog();
+      }
+      return;
     }
 
-    return Scaffold(
-      backgroundColor: Colors.black,
-      appBar: scannedPages.isNotEmpty
-          ? AppBar(
-              backgroundColor: Colors.black,
-              foregroundColor: Colors.white,
-              title: Text('${scannedPages.length} page${scannedPages.length > 1 ? 's' : ''} scanned'),
-            )
-          : null,
-      body: scannedPages.isEmpty
-          ? const Center(
-              child: CircularProgressIndicator(color: Colors.white),
-            )
-          : Column(
-              children: [
-                Expanded(
-                  child: ListView.builder(
-                    itemCount: scannedPages.length,
-                    itemBuilder: (context, index) {
-                      return Card(
-                        margin: const EdgeInsets.all(8),
-                        child: ListTile(
-                          leading: Image.file(
-                            File(scannedPages[index]),
-                            width: 60,
-                            height: 80,
-                            fit: BoxFit.cover,
-                          ),
-                          title: Text('Page ${index + 1}'),
-                          trailing: IconButton(
-                            icon: const Icon(Icons.delete, color: Colors.red),
-                            onPressed: () {
-                              setState(() {
-                                scannedPages.removeAt(index);
-                              });
-                            },
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: _scanDocument,
-                          icon: const Icon(Icons.add),
-                          label: const Text('Add More Pages'),
-                          style: ElevatedButton.styleFrom(
-                            padding: const EdgeInsets.all(16),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: scannedPages.isEmpty
-                              ? null
-                              : () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => EnhancementScreen(
-                                        imagePath: scannedPages.last,
-                                        allPages: scannedPages,
-                                      ),
-                                    ),
-                                  );
-                                },
-                          icon: const Icon(Icons.check),
-                          label: const Text('Continue'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.blue,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.all(16),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+    setState(() => _isScanning = true);
+
+    try {
+      // Use document scanner package
+      List<String>? pictures = await CunningDocumentScanner.getPictures(
+        noOfPages: 1,
+      );
+
+      if (pictures != null && pictures.isNotEmpty) {
+        // Increment scan count for THIS PAGE
+        await _subscriptionManager.incrementScanCount();
+        
+        setState(() {
+          _scannedImages.addAll(pictures);
+        });
+
+        if (mounted) {
+          // Get remaining scans to show user
+          final remaining = await _subscriptionManager.getRemainingScans();
+          
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                '✓ Page ${_scannedImages.length} captured${!isPremium ? ' • $remaining scans left today' : ''}',
+              ),
+              backgroundColor: Colors.green,
+              duration: Duration(seconds: 2),
             ),
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint('Scan error: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to scan document'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      setState(() => _isScanning = false);
+    }
+  }
+
+  void _finishScanning() {
+    if (_scannedImages.isEmpty) return;
+
+    // Navigate to enhancement screen
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => EnhancementScreen(
+          imagePath: _scannedImages.first,
+          additionalPages: _scannedImages.length > 1 
+              ? _scannedImages.sublist(1) 
+              : null,
+        ),
+      ),
     );
+  }
+
+  void _showMultiPageUpgradeDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(Icons.workspace_premium, color: Colors.amber),
+            SizedBox(width: 8),
+            Text('Premium Feature'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Multi-page scanning is a Premium feature!',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(height: 16),
+            Text('With Premium you get:'),
+            SizedBox(height: 8),
+            _buildFeature('📄 Unlimited pages per document'),
+            _buildFeature('♾️ Unlimited daily scans'),
+            _buildFeature('🤖 AI document analysis'),
+            _buildFeature('🔍 OCR text extraction'),
+            _buildFeature('🚫 No watermarks'),
+            SizedBox(height: 16),
+            Container(
+              padding: EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.green.shade50,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.green),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.celebration, color: Colors.green),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      '🎉 Start 7-day FREE trial!',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.green.shade900,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Continue with Single Page'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              SubscriptionManager.showSubscriptionDialog(context);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.blue,
+              foregroundColor: Colors.white,
+            ),
+            child: Text('Start Free Trial'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFeature(String text) {
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          Icon(Icons.check_circle, color: Colors.green, size: 20),
+          SizedBox(width: 8),
+          Expanded(child: Text(text)),
+        ],
+      ),
+    );
+  }
+
+  void _showUpgradeDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Daily Limit Reached'),
+        content: Text(
+          'You\'ve used all 5 free scans for today.\n\n'
+          'Upgrade to Premium for unlimited scans and AI features!\n\n'
+          '🎉 Start your 7-day FREE trial now!',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Later'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              SubscriptionManager.showSubscriptionDialog(context);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.blue,
+              foregroundColor: Colors.white,
+            ),
+            child: Text('Start Free Trial'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
   }
 }

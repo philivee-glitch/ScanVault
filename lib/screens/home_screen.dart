@@ -1,237 +1,247 @@
 import 'package:flutter/material.dart';
+import 'package:permission_handler/permission_handler.dart';
+import '../subscription_manager.dart';
+import '../permissions_manager.dart';
 import 'camera_screen.dart';
 import 'documents_screen.dart';
-import '../subscription_manager.dart';
+import 'settings_screen.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  const HomeScreen({Key? key}) : super(key: key);
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  bool isPremium = false;
-  int remainingScans = 5;
-  bool isLoading = true;
+  final SubscriptionManager _subscriptionManager = SubscriptionManager();
+  int _remainingScans = 5;
+  bool _isPremium = false;
 
   @override
   void initState() {
     super.initState();
-    _loadSubscriptionStatus();
+    _loadUserStatus();
   }
 
-  Future<void> _loadSubscriptionStatus() async {
-    final premium = await SubscriptionManager.isPremium();
-    final remaining = await SubscriptionManager.getRemainingScans();
+  Future<void> _loadUserStatus() async {
+    final remaining = await _subscriptionManager.getRemainingScans();
+    final premium = _subscriptionManager.isPremium;
     
     setState(() {
-      isPremium = premium;
-      remainingScans = remaining;
-      isLoading = false;
+      _remainingScans = remaining;
+      _isPremium = premium;
     });
-  }
-
-  Future<void> _startScanning() async {
-    // Check if user can scan
-    final canScan = await SubscriptionManager.canScan();
-    
-    if (!canScan && mounted) {
-      // Show limit reached dialog
-      SubscriptionManager.showLimitReachedDialog(context);
-      return;
-    }
-    
-    // Navigate to camera
-    final result = await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const CameraScreen(camera: null),
-      ),
-    );
-    
-    // Reload subscription status when returning
-    if (result != null) {
-      _loadSubscriptionStatus();
-    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.blue,
-      body: SafeArea(
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Spacer(flex: 2),
-              
-              // ScanVault Logo
-              Container(
-                width: 150,
-                height: 150,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: const Icon(
-                  Icons.document_scanner,
-                  size: 80,
-                  color: Colors.blue,
-                ),
-              ),
-              
-              const SizedBox(height: 30),
-              
-              // App Title with Premium Badge
-              Row(
+      appBar: AppBar(
+        title: Text('ScanVault Premium'),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.settings),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => SettingsScreen()),
+              );
+            },
+          ),
+        ],
+      ),
+      body: Padding(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Status Card
+            _buildStatusCard(),
+            SizedBox(height: 24),
+            
+            // Scan Button
+            Expanded(
+              child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Text(
-                    'ScanVault',
+                  Icon(
+                    Icons.document_scanner,
+                    size: 100,
+                    color: Colors.blue,
+                  ),
+                  SizedBox(height: 24),
+                  Text(
+                    'Ready to Scan',
                     style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 48,
+                      fontSize: 28,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  if (isPremium) ...[
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: Colors.amber,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Text(
-                        'PREMIUM',
-                        style: TextStyle(
-                          color: Colors.black,
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                        ),
+                  SizedBox(height: 16),
+                  Text(
+                    'Tap the button below to start scanning documents',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                  SizedBox(height: 32),
+                  ElevatedButton.icon(
+                    onPressed: _startScanning,
+                    icon: Icon(Icons.camera_alt, size: 28),
+                    label: Text(
+                      'Start Scanning',
+                      style: TextStyle(fontSize: 18),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      padding: EdgeInsets.symmetric(horizontal: 48, vertical: 20),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                  ],
+                  ),
+                  SizedBox(height: 16),
+                  TextButton.icon(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => DocumentsScreen()),
+                      );
+                    },
+                    icon: Icon(Icons.folder),
+                    label: Text('View Documents'),
+                  ),
                 ],
               ),
-              
-              const SizedBox(height: 10),
-              
-              // Subtitle
-              const Text(
-                'Professional Document Scanner',
-                style: TextStyle(
-                  color: Colors.white70,
-                  fontSize: 18,
-                ),
-              ),
-              
-              const SizedBox(height: 15),
-              
-              // Scan Counter or Premium Badge
-              if (isLoading)
-                const CircularProgressIndicator(color: Colors.white)
-              else if (isPremium)
-                const Text(
-                  '✨ Unlimited Scans • No Watermarks ✨',
-                  style: TextStyle(
-                    color: Colors.amberAccent,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                )
-              else
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    '$remainingScans / 5 scans remaining today',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 15,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-              
-              const Spacer(flex: 1),
-              
-              // Start Scanning Button
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 40),
-                child: ElevatedButton(
-                  onPressed: _startScanning,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    foregroundColor: Colors.blue,
-                    padding: const EdgeInsets.symmetric(vertical: 18),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                    minimumSize: const Size(double.infinity, 60),
-                  ),
-                  child: const Text(
-                    'Start Scanning',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-              
-              const SizedBox(height: 20),
-              
-              // My Documents Link
-              TextButton(
-                onPressed: () async {
-                  await Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const DocumentsScreen(),
-                    ),
-                  );
-                  // Reload when returning
-                  _loadSubscriptionStatus();
-                },
-                child: const Text(
-                  'My Documents',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    decoration: TextDecoration.underline,
-                    decorationColor: Colors.white,
-                  ),
-                ),
-              ),
-              
-              // Upgrade Button for Free Users
-              if (!isPremium && !isLoading) ...[
-                const SizedBox(height: 10),
-                TextButton.icon(
-                  onPressed: () => SubscriptionManager.showSubscriptionDialog(context),
-                  icon: const Icon(Icons.star, color: Colors.amberAccent),
-                  label: const Text(
-                    'Upgrade to Premium',
-                    style: TextStyle(
-                      color: Colors.amberAccent,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ],
-              
-              const Spacer(flex: 2),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
+  }
+
+  Widget _buildStatusCard() {
+    if (_isPremium) {
+      return Card(
+        color: Colors.amber.shade50,
+        child: Padding(
+          padding: EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Icon(Icons.workspace_premium, color: Colors.amber, size: 32),
+              SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Premium Active',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    if (_subscriptionManager.isInTrial)
+                      Text(
+                        'Trial: ${_subscriptionManager.getTrialTimeRemaining()}',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey[700],
+                        ),
+                      )
+                    else
+                      Text(
+                        'Unlimited scans, AI features',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey[700],
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    } else {
+      return Card(
+        color: Colors.blue.shade50,
+        child: Padding(
+          padding: EdgeInsets.all(16),
+          child: Column(
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.info_outline, color: Colors.blue),
+                  SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      '$_remainingScans scans remaining today',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 12),
+              ElevatedButton.icon(
+                onPressed: () {
+                  SubscriptionManager.showSubscriptionDialog(context);
+                },
+                icon: Icon(Icons.upgrade, size: 20),
+                label: Text('Upgrade to Premium'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue,
+                  foregroundColor: Colors.white,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+  }
+
+  Future<void> _startScanning() async {
+    // Check if user can scan
+    final canScan = await _subscriptionManager.canScanToday();
+    
+    if (!canScan) {
+      // Show upgrade dialog
+      SubscriptionManager.showSubscriptionDialog(context);
+      return;
+    }
+
+    // Check camera permission
+    final permissionManager = PermissionsManager();
+    final hasPermission = await permissionManager.requestCameraPermission(context);
+    
+    if (!hasPermission) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Camera permission is required to scan documents'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      return;
+    }
+
+    // Navigate to camera screen
+    if (mounted) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => CameraScreen()),
+      ).then((_) {
+        // Reload status when returning from camera
+        _loadUserStatus();
+      });
+    }
   }
 }

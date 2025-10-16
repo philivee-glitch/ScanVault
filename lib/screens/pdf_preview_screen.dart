@@ -1,115 +1,100 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_pdfview/flutter_pdfview.dart';
-import 'dart:io';
+import 'package:share_plus/share_plus.dart';
+import 'documents_screen.dart';
 
 class PdfPreviewScreen extends StatefulWidget {
   final String pdfPath;
-  final String documentName;
 
-  const PdfPreviewScreen({
-    super.key,
-    required this.pdfPath,
-    required this.documentName,
-  });
+  const PdfPreviewScreen({Key? key, required this.pdfPath}) : super(key: key);
 
   @override
   State<PdfPreviewScreen> createState() => _PdfPreviewScreenState();
 }
 
 class _PdfPreviewScreenState extends State<PdfPreviewScreen> {
+  int? totalPages;
   int currentPage = 0;
-  int totalPages = 0;
-  bool isReady = false;
-  String errorMessage = '';
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              widget.documentName,
-              style: const TextStyle(fontSize: 16),
-              overflow: TextOverflow.ellipsis,
-            ),
-            if (totalPages > 0)
-              Text(
-                'Page ${currentPage + 1} of $totalPages',
-                style: const TextStyle(fontSize: 12),
-              ),
-          ],
-        ),
-        backgroundColor: Colors.blue,
-      ),
-      body: Stack(
-        children: [
-          PDFView(
-            filePath: widget.pdfPath,
-            enableSwipe: true,
-            swipeHorizontal: false,
-            autoSpacing: true,
-            pageFling: true,
-            pageSnap: true,
-            defaultPage: currentPage,
-            fitPolicy: FitPolicy.BOTH,
-            preventLinkNavigation: false,
-            onRender: (pages) {
-              setState(() {
-                totalPages = pages ?? 0;
-                isReady = true;
-              });
-            },
-            onError: (error) {
-              setState(() {
-                errorMessage = error.toString();
-              });
-            },
-            onPageError: (page, error) {
-              setState(() {
-                errorMessage = 'Error on page ' + page.toString() + ': ' + error.toString();
-              });
-            },
-            onViewCreated: (PDFViewController pdfViewController) {
-              // Controller ready
-            },
-            onPageChanged: (int? page, int? total) {
-              setState(() {
-                currentPage = page ?? 0;
-                totalPages = total ?? 0;
-              });
-            },
-          ),
-          if (!isReady && errorMessage.isEmpty)
-            const Center(
-              child: CircularProgressIndicator(),
-            ),
-          if (errorMessage.isNotEmpty)
+        title: Text('PDF Preview'),
+        actions: [
+          if (totalPages != null)
             Center(
               child: Padding(
-                padding: const EdgeInsets.all(24.0),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.error_outline, size: 64, color: Colors.red),
-                    const SizedBox(height: 16),
-                    const Text(
-                      'Error loading PDF',
-                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      errorMessage,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(color: Colors.grey[700]),
-                    ),
-                  ],
-                ),
+                padding: EdgeInsets.symmetric(horizontal: 16),
+                child: Text('${currentPage + 1}/$totalPages'),
               ),
             ),
+          IconButton(
+            icon: Icon(Icons.share),
+            onPressed: () => _sharePdf(),
+            tooltip: 'Share PDF',
+          ),
+          IconButton(
+            icon: Icon(Icons.folder),
+            onPressed: () {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => DocumentsScreen()),
+              );
+            },
+            tooltip: 'Go to Documents',
+          ),
         ],
       ),
+      body: File(widget.pdfPath).existsSync()
+          ? PDFView(
+              filePath: widget.pdfPath,
+              enableSwipe: true,
+              swipeHorizontal: false,
+              autoSpacing: true,
+              pageFling: true,
+              pageSnap: true,
+              onRender: (pages) {
+                setState(() {
+                  totalPages = pages;
+                });
+              },
+              onPageChanged: (page, total) {
+                setState(() {
+                  currentPage = page ?? 0;
+                });
+              },
+              onError: (error) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Error loading PDF: $error'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              },
+            )
+          : Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.error_outline, size: 64, color: Colors.red),
+                  SizedBox(height: 16),
+                  Text('PDF file not found'),
+                ],
+              ),
+            ),
     );
+  }
+
+  void _sharePdf() async {
+    try {
+      await Share.shareXFiles(
+        [XFile(widget.pdfPath)],
+        text: 'Scanned document from ScanVault',
+      );
+    } catch (e) {
+      debugPrint('Share error: $e');
+    }
   }
 }

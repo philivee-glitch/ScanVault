@@ -1,219 +1,286 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SubscriptionManager {
-  static const String monthlySubscriptionId = 'scanvault_premium_monthly';
-  static const String yearlySubscriptionId = 'scanvault_premium_yearly';
-  static const int freeScansPerDay = 5;
+  static const String monthlyProductId = 'scanvault_premium_monthly';
+  static const String yearlyProductId = 'scanvault_premium_yearly';
   
-  static final InAppPurchase _inAppPurchase = InAppPurchase.instance;
+  // Pricing
+  static const String monthlyPrice = '\$6.99';
+  static const String yearlyPrice = '\$49.99';
+  static const String yearlySavings = '40%';
   
-  // Check if user has premium subscription
-  static Future<bool> isPremium() async {
+  // Trial configuration
+  static const int trialDays = 7;
+  
+  static final SubscriptionManager _instance = SubscriptionManager._internal();
+  factory SubscriptionManager() => _instance;
+  SubscriptionManager._internal();
+
+  final InAppPurchase _iap = InAppPurchase.instance;
+  StreamSubscription<List<PurchaseDetails>>? _subscription;
+  
+  List<ProductDetails> _products = [];
+  bool _isAvailable = false;
+  bool _isPremium = false;
+  bool _isInTrial = false;
+  DateTime? _trialEndDate;
+  
+  bool get isPremium => _isPremium || _isInTrial;
+  bool get isInTrial => _isInTrial;
+  DateTime? get trialEndDate => _trialEndDate;
+  List<ProductDetails> get products => _products;
+  bool get isAvailable => _isAvailable;
+
+  Future<void> initialize() async {
+    _isAvailable = await _iap.isAvailable();
+    
+    if (_isAvailable) {
+      // Listen to purchase updates
+      _subscription = _iap.purchaseStream.listen(
+        _onPurchaseUpdate,
+        onDone: () => _subscription?.cancel(),
+        onError: (error) => debugPrint('Purchase Error: $error'),
+      );
+
+      // Load products
+      await _loadProducts();
+      
+      // Check for existing purchases
+      await _checkPurchaseStatus();
+      
+      // Restore purchases on startup
+      await restorePurchases();
+    }
+    
+    // Check trial status
+    await _checkTrialStatus();
+  }
+
+  Future<void> _loadProducts() async {
+    const Set<String> productIds = {
+      monthlyProductId,
+      yearlyProductId,
+    };
+
     try {
-      final prefs = await SharedPreferences.getInstance();
+      final ProductDetailsResponse response = 
+          await _iap.queryProductDetails(productIds);
       
-      // Check if user has a valid subscription stored locally
-      final subscriptionExpiry = prefs.getInt('subscription_expiry');
-      if (subscriptionExpiry != null) {
-        final expiryDate = DateTime.fromMillisecondsSinceEpoch(subscriptionExpiry);
-        if (DateTime.now().isBefore(expiryDate)) {
-          return true;
-        }
+      if (response.notFoundIDs.isNotEmpty) {
+        debugPrint('Products not found: ${response.notFoundIDs}');
       }
       
-      // Check with Google Play Billing
-      final bool available = await _inAppPurchase.isAvailable();
-      if (!available) {
-        return false;
-      }
-      
-      return false;
+      _products = response.productDetails;
+      debugPrint('Loaded ${_products.length} products');
     } catch (e) {
-      print('Error checking subscription: $e');
+      debugPrint('Error loading products: $e');
+    }
+  }
+
+  Future<void> _checkPurchaseStatus() async {
+    final prefs = await SharedPreferences.getInstance();
+    _isPremium = prefs.getBool('is_premium') ?? false;
+  }
+
+  Future<void> _checkTrialStatus() async {
+    final prefs = await SharedPreferences.getInstance();
+    
+    final trialStartStr = prefs.getString('trial_start_date');
+    final hasUsedTrial = prefs.getBool('has_used_trial') ?? false;
+    
+    if (trialStartStr != null && !hasUsedTrial) {
+      final trialStart = DateTime.parse(trialStartStr);
+      _trialEndDate = trialStart.add(Duration(days: trialDays));
+      
+      if (DateTime.now().isBefore(_trialEndDate!)) {
+        _isInTrial = true;
+        debugPrint('User is in trial until ${_trialEndDate}');
+      } else {
+        // Trial expired
+        _isInTrial = false;
+        await prefs.setBool('has_used_trial', true);
+        debugPrint('Trial has expired');
+      }
+    }
+  }
+
+  Future<bool> startTrial() async {
+    final prefs = await SharedPreferences.getInstance();
+    final hasUsedTrial = prefs.getBool('has_used_trial') ?? false;
+    
+    if (hasUsedTrial || _isInTrial || _isPremium) {
+      return false; // Already used trial or is premium
+    }
+    
+    // Start trial
+    final now = DateTime.now();
+    await prefs.setString('trial_start_date', now.toIso8601String());
+    _isInTrial = true;
+    _trialEndDate = now.add(Duration(days: trialDays));
+    
+    debugPrint('Trial started! Ends: ${_trialEndDate}');
+    return true;
+  }
+
+  String getTrialTimeRemaining() {
+    if (!_isInTrial || _trialEndDate == null) return '';
+    
+    final remaining = _trialEndDate!.difference(DateTime.now());
+    
+    if (remaining.inDays > 0) {
+      return '${remaining.inDays} days left';
+    } else if (remaining.inHours > 0) {
+      return '${remaining.inHours} hours left';
+    } else {
+      return 'Less than 1 hour left';
+    }
+  }
+
+  Future<void> _onPurchaseUpdate(List<PurchaseDetails> purchaseDetailsList) async {
+    for (var purchaseDetails in purchaseDetailsList) {
+      if (purchaseDetails.status == PurchaseStatus.pending) {
+        debugPrint('Purchase pending...');
+      } else if (purchaseDetails.status == PurchaseStatus.purchased ||
+                 purchaseDetails.status == PurchaseStatus.restored) {
+        
+        // Verify purchase (in production, verify with your backend)
+        final valid = await _verifyPurchase(purchaseDetails);
+        
+        if (valid) {
+          await _deliverProduct(purchaseDetails);
+        }
+        
+        // Complete the purchase
+        if (purchaseDetails.pendingCompletePurchase) {
+          await _iap.completePurchase(purchaseDetails);
+        }
+      } else if (purchaseDetails.status == PurchaseStatus.error) {
+        debugPrint('Purchase error: ${purchaseDetails.error}');
+      }
+    }
+  }
+
+  Future<bool> _verifyPurchase(PurchaseDetails purchaseDetails) async {
+    // TODO: In production, verify with your backend server
+    // For now, we trust the platform
+    return true;
+  }
+
+  Future<void> _deliverProduct(PurchaseDetails purchaseDetails) async {
+    final prefs = await SharedPreferences.getInstance();
+    
+    // Grant premium access
+    await prefs.setBool('is_premium', true);
+    await prefs.setString('purchase_id', purchaseDetails.purchaseID ?? '');
+    await prefs.setString('product_id', purchaseDetails.productID);
+    
+    _isPremium = true;
+    _isInTrial = false; // End trial if they purchase
+    
+    debugPrint('Premium access granted!');
+  }
+
+  Future<bool> buyProduct(ProductDetails product) async {
+    if (!_isAvailable) {
+      debugPrint('In-app purchase not available');
+      return false;
+    }
+
+    final PurchaseParam purchaseParam = PurchaseParam(
+      productDetails: product,
+    );
+
+    try {
+      final bool success = await _iap.buyNonConsumable(
+        purchaseParam: purchaseParam,
+      );
+      return success;
+    } catch (e) {
+      debugPrint('Purchase failed: $e');
       return false;
     }
   }
-  
-  // Get remaining scans for today
-  static Future<int> getRemainingScans() async {
-    if (await isPremium()) {
-      return 999; // Unlimited for premium users
+
+  Future<void> restorePurchases() async {
+    if (!_isAvailable) return;
+
+    try {
+      await _iap.restorePurchases();
+      debugPrint('Purchases restored');
+    } catch (e) {
+      debugPrint('Restore failed: $e');
     }
-    
+  }
+
+  // Scan counter for free tier
+  Future<bool> canScanToday() async {
+    if (isPremium) return true;
+
     final prefs = await SharedPreferences.getInstance();
-    final today = DateTime.now().toIso8601String().split('T')[0];
+    final today = DateTime.now().toString().substring(0, 10);
+    final lastScanDate = prefs.getString('last_scan_date') ?? '';
+    final scanCount = prefs.getInt('scan_count') ?? 0;
+
+    if (lastScanDate != today) {
+      // Reset counter for new day
+      await prefs.setString('last_scan_date', today);
+      await prefs.setInt('scan_count', 0);
+      return true;
+    }
+
+    return scanCount < 5; // Free tier limit
+  }
+
+  Future<void> incrementScanCount() async {
+    if (isPremium) return; // No limit for premium
+
+    final prefs = await SharedPreferences.getInstance();
+    final today = DateTime.now().toString().substring(0, 10);
     final lastScanDate = prefs.getString('last_scan_date') ?? '';
     
     if (lastScanDate != today) {
-      // New day, reset counter
       await prefs.setString('last_scan_date', today);
-      await prefs.setInt('scans_today', 0);
-      return freeScansPerDay;
-    }
-    
-    final scansToday = prefs.getInt('scans_today') ?? 0;
-    return freeScansPerDay - scansToday;
-  }
-  
-  // Increment scan count
-  static Future<bool> incrementScanCount() async {
-    if (await isPremium()) {
-      return true; // Always allow for premium users
-    }
-    
-    final remaining = await getRemainingScans();
-    if (remaining <= 0) {
-      return false; // Limit reached
-    }
-    
-    final prefs = await SharedPreferences.getInstance();
-    final scansToday = prefs.getInt('scans_today') ?? 0;
-    await prefs.setInt('scans_today', scansToday + 1);
-    return true;
-  }
-  
-  // Check if scan limit reached
-  static Future<bool> canScan() async {
-    if (await isPremium()) {
-      return true;
-    }
-    
-    return await getRemainingScans() > 0;
-  }
-  
-  // Get available subscription products
-  static Future<List<ProductDetails>> getSubscriptionProducts() async {
-    try {
-      final bool available = await _inAppPurchase.isAvailable();
-      if (!available) {
-        return [];
-      }
-      
-      const Set<String> productIds = {
-        monthlySubscriptionId,
-        yearlySubscriptionId,
-      };
-      
-      final ProductDetailsResponse response = 
-          await _inAppPurchase.queryProductDetails(productIds);
-      
-      if (response.error != null) {
-        print('Error loading products: ${response.error}');
-        return [];
-      }
-      
-      return response.productDetails;
-    } catch (e) {
-      print('Error getting products: $e');
-      return [];
-    }
-  }
-  
-  // Purchase a subscription
-  static Future<bool> purchaseSubscription(ProductDetails product) async {
-    try {
-      final PurchaseParam purchaseParam = PurchaseParam(
-        productDetails: product,
-      );
-      
-      return await _inAppPurchase.buyNonConsumable(
-        purchaseParam: purchaseParam,
-      );
-    } catch (e) {
-      print('Error purchasing subscription: $e');
-      return false;
-    }
-  }
-  
-  // Save subscription locally (call this after successful purchase)
-  static Future<void> saveSubscription(String productId) async {
-    final prefs = await SharedPreferences.getInstance();
-    
-    // Set expiry date based on subscription type
-    DateTime expiryDate;
-    if (productId == monthlySubscriptionId) {
-      expiryDate = DateTime.now().add(const Duration(days: 30));
+      await prefs.setInt('scan_count', 1);
     } else {
-      expiryDate = DateTime.now().add(const Duration(days: 365));
+      final scanCount = prefs.getInt('scan_count') ?? 0;
+      await prefs.setInt('scan_count', scanCount + 1);
+    }
+  }
+
+  Future<int> getRemainingScans() async {
+    if (isPremium) return 999; // Unlimited
+
+    final prefs = await SharedPreferences.getInstance();
+    final today = DateTime.now().toString().substring(0, 10);
+    final lastScanDate = prefs.getString('last_scan_date') ?? '';
+    
+    if (lastScanDate != today) {
+      return 5;
     }
     
-    await prefs.setInt('subscription_expiry', expiryDate.millisecondsSinceEpoch);
-    await prefs.setString('subscription_type', productId);
+    final scanCount = prefs.getInt('scan_count') ?? 0;
+    return 5 - scanCount;
   }
-  
-  // Show limit reached dialog
-  static Future<void> showLimitReachedDialog(BuildContext context) async {
-    final remaining = await getRemainingScans();
-    
-    if (!context.mounted) return;
-    
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Daily Limit Reached'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.lock_clock, size: 60, color: Colors.orange),
-            const SizedBox(height: 16),
-            Text(
-              remaining <= 0
-                  ? 'You\'ve used all 5 free scans today!'
-                  : 'Free users get 5 scans per day.',
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 16),
-            ),
-            const SizedBox(height: 12),
-            const Text(
-              '✨ Upgrade to Premium for:',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            const Text('• Unlimited scans'),
-            const Text('• No watermarks'),
-            const Text('• All premium features'),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Later'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              showSubscriptionDialog(context);
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.blue,
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('Upgrade Now'),
-          ),
-        ],
-      ),
-    );
+
+  void dispose() {
+    _subscription?.cancel();
   }
-  
+
   // Show subscription dialog
   static Future<void> showSubscriptionDialog(BuildContext context) async {
-    final products = await getSubscriptionProducts();
+    final manager = SubscriptionManager();
     
-    if (!context.mounted) return;
-    
-    showDialog(
+    return showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Row(
+        title: Row(
           children: [
-            Icon(Icons.star, color: Colors.amber, size: 28),
+            Icon(Icons.workspace_premium, color: Colors.amber),
             SizedBox(width: 8),
-            Text(
-              'Go Premium!',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
+            Text('Upgrade to Premium'),
           ],
         ),
         content: SingleChildScrollView(
@@ -221,164 +288,176 @@ class SubscriptionManager {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.blue[50],
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildFeature('✓ Unlimited daily scans', true),
-                    _buildFeature('✓ No watermarks on PDFs', true),
-                    _buildFeature('✓ Batch processing', true),
-                    _buildFeature('✓ OCR text recognition', true),
-                    _buildFeature('✓ Cloud backup & sync', true),
-                    _buildFeature('✓ Priority support', true),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 20),
-              const Text(
-                'Choose your plan:',
-                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(height: 12),
-              if (products.isEmpty)
-                const Center(
-                  child: Padding(
-                    padding: EdgeInsets.all(20),
-                    child: Text(
-                      'Unable to load subscription plans.\nPlease try again later.',
-                      textAlign: TextAlign.center,
-                    ),
+              // Trial banner
+              if (!manager.isPremium)
+                Container(
+                  padding: EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.green.shade50,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.green),
                   ),
-                )
-              else
-                ...products.map((product) => _buildSubscriptionOption(
-                  context,
-                  product,
-                )),
+                  child: Row(
+                    children: [
+                      Icon(Icons.celebration, color: Colors.green),
+                      SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          '🎉 Start your $trialDays-day FREE trial!',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.green.shade900,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              SizedBox(height: 16),
+              
+              Text(
+                'Premium Features:',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+              SizedBox(height: 12),
+              _buildFeature('✨ Unlimited scans per day'),
+              _buildFeature('🚫 No watermarks on PDFs'),
+              _buildFeature('🔍 OCR text extraction'),
+              _buildFeature('📄 Searchable PDFs'),
+              _buildFeature('🤖 AI document summarization'),
+              _buildFeature('🏷️ Smart categorization'),
+              _buildFeature('🔎 AI-powered search'),
+              _buildFeature('☁️ Cloud backup (coming soon)'),
+              SizedBox(height: 16),
+              
+              // Pricing
+              _buildPricingCard(
+                'Monthly Plan',
+                monthlyPrice,
+                'per month',
+                false,
+              ),
+              SizedBox(height: 8),
+              _buildPricingCard(
+                'Yearly Plan',
+                yearlyPrice,
+                'per year (Save $yearlySavings!)',
+                true,
+              ),
+              SizedBox(height: 12),
+              
+              Text(
+                'Cancel anytime. Auto-renews.',
+                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                textAlign: TextAlign.center,
+              ),
             ],
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Not Now'),
+            child: Text('Maybe Later'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              // Start trial first
+              final started = await manager.startTrial();
+              if (started && context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('🎉 $trialDays-day free trial activated!'),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.blue,
+              foregroundColor: Colors.white,
+            ),
+            child: Text('Start Free Trial'),
           ),
         ],
       ),
     );
   }
-  
-  static Widget _buildFeature(String text, [bool isPremium = false]) {
+
+  static Widget _buildFeature(String text) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Text(
-        text,
-        style: TextStyle(
-          fontSize: 14,
-          color: isPremium ? Colors.blue[900] : null,
-        ),
+      padding: EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          Icon(Icons.check_circle, color: Colors.green, size: 20),
+          SizedBox(width: 8),
+          Expanded(child: Text(text)),
+        ],
       ),
     );
   }
-  
-  static Widget _buildSubscriptionOption(
-    BuildContext context,
-    ProductDetails product,
+
+  static Widget _buildPricingCard(
+    String title,
+    String price,
+    String subtitle,
+    bool recommended,
   ) {
-    final isYearly = product.id == yearlySubscriptionId;
-    
-    return Card(
-      elevation: isYearly ? 4 : 1,
-      color: isYearly ? Colors.blue[50] : null,
-      child: ListTile(
-        title: Row(
-          children: [
-            Text(
-              isYearly ? 'Yearly Plan' : 'Monthly Plan',
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-            if (isYearly) ...[
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: Colors.orange,
-                  borderRadius: BorderRadius.circular(4),
+    return Container(
+      padding: EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: recommended ? Colors.blue.shade50 : Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: recommended ? Colors.blue : Colors.grey.shade300,
+          width: recommended ? 2 : 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                title,
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
                 ),
-                child: const Text(
-                  'SAVE 40%',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
+              ),
+              if (recommended)
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.amber,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    'BEST VALUE',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
                   ),
                 ),
-              ),
             ],
-          ],
-        ),
-        subtitle: Text(
-          isYearly ? 'Best Value!' : 'Flexible monthly billing',
-        ),
-        trailing: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Text(
-              product.price,
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.blue,
-              ),
+          ),
+          SizedBox(height: 4),
+          Text(
+            price,
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: Colors.blue,
             ),
-            Text(
-              isYearly ? '/year' : '/month',
-              style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-            ),
-          ],
-        ),
-        onTap: () async {
-          Navigator.pop(context);
-          
-          // Show loading
-          showDialog(
-            context: context,
-            barrierDismissible: false,
-            builder: (context) => const Center(
-              child: CircularProgressIndicator(),
-            ),
-          );
-          
-          final success = await purchaseSubscription(product);
-          
-          if (context.mounted) {
-            Navigator.pop(context); // Close loading
-            
-            if (success) {
-              await saveSubscription(product.id);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('🎉 Welcome to Premium! Enjoy unlimited scanning!'),
-                  backgroundColor: Colors.green,
-                  duration: Duration(seconds: 3),
-                ),
-              );
-            } else {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Purchase cancelled or failed. Please try again.'),
-                  backgroundColor: Colors.red,
-                ),
-              );
-            }
-          }
-        },
+          ),
+          Text(
+            subtitle,
+            style: TextStyle(fontSize: 12, color: Colors.grey[700]),
+          ),
+        ],
       ),
     );
   }
