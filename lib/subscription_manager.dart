@@ -271,19 +271,60 @@ class SubscriptionManager {
 
   // Show subscription dialog
   static Future<void> showSubscriptionDialog(BuildContext context) async {
-    final manager = SubscriptionManager();
-    
     return showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Row(
-          children: [
-            Icon(Icons.workspace_premium, color: Colors.amber),
-            SizedBox(width: 8),
-            Text('Upgrade to Premium'),
-          ],
+      builder: (context) => _SubscriptionDialog(),
+    );
+  }
+
+  static Widget _buildFeature(String text) {
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 3),
+      child: Row(
+        children: [
+          Icon(Icons.check_circle, color: Colors.green, size: 18),
+          SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(fontSize: 13),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// Stateful dialog widget to handle plan selection
+class _SubscriptionDialog extends StatefulWidget {
+  @override
+  _SubscriptionDialogState createState() => _SubscriptionDialogState();
+}
+
+class _SubscriptionDialogState extends State<_SubscriptionDialog> {
+  bool _isYearly = true; // Default to yearly (best value)
+  final manager = SubscriptionManager();
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Row(
+        children: [
+          Icon(Icons.workspace_premium, color: Colors.amber, size: 22),
+          SizedBox(width: 8),
+          Text(
+            'Upgrade to Premium',
+            style: TextStyle(fontSize: 18),
+          ),
+        ],
+      ),
+      contentPadding: EdgeInsets.fromLTRB(24, 16, 24, 0),
+      content: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.6,
         ),
-        content: SingleChildScrollView(
+        child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -291,7 +332,7 @@ class SubscriptionManager {
               // Trial banner
               if (!manager.isPremium)
                 Container(
-                  padding: EdgeInsets.all(12),
+                  padding: EdgeInsets.all(10),
                   decoration: BoxDecoration(
                     color: Colors.green.shade50,
                     borderRadius: BorderRadius.circular(8),
@@ -299,118 +340,148 @@ class SubscriptionManager {
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.celebration, color: Colors.green),
+                      Icon(Icons.celebration, color: Colors.green, size: 20),
                       SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          '🎉 Start your $trialDays-day FREE trial!',
+                          '🎉 ${SubscriptionManager.trialDays}-day FREE trial!',
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             color: Colors.green.shade900,
+                            fontSize: 13,
                           ),
                         ),
                       ),
                     ],
                   ),
                 ),
-              SizedBox(height: 16),
+              SizedBox(height: 12),
               
               Text(
                 'Premium Features:',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-              ),
-              SizedBox(height: 12),
-              _buildFeature('✨ Unlimited scans per day'),
-              _buildFeature('🚫 No watermarks on PDFs'),
-              _buildFeature('🔍 OCR text extraction'),
-              _buildFeature('📄 Searchable PDFs'),
-              _buildFeature('🤖 AI document summarization'),
-              _buildFeature('🏷️ Smart categorization'),
-              _buildFeature('🔎 AI-powered search'),
-              _buildFeature('☁️ Cloud backup (coming soon)'),
-              SizedBox(height: 16),
-              
-              // Pricing
-              _buildPricingCard(
-                'Monthly Plan',
-                monthlyPrice,
-                'per month',
-                false,
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
               ),
               SizedBox(height: 8),
-              _buildPricingCard(
-                'Yearly Plan',
-                yearlyPrice,
-                'per year (Save $yearlySavings!)',
-                true,
-              ),
+              SubscriptionManager._buildFeature('✨ Unlimited scans per day'),
+              SubscriptionManager._buildFeature('🚫 No watermarks on PDFs'),
+              SubscriptionManager._buildFeature('🔍 OCR text extraction'),
+              SubscriptionManager._buildFeature('📄 Searchable PDFs'),
+              SubscriptionManager._buildFeature('🤖 AI document summarization'),
+              SubscriptionManager._buildFeature('🏷️ Smart categorization'),
+              SubscriptionManager._buildFeature('🔎 AI-powered search'),
+              SubscriptionManager._buildFeature('☁️ Cloud backup (coming soon)'),
               SizedBox(height: 12),
               
-              Text(
-                'Cancel anytime. Auto-renews.',
-                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                textAlign: TextAlign.center,
+              // Pricing - Now clickable!
+              GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _isYearly = false;
+                  });
+                },
+                child: _buildPricingCard(
+                  'Monthly Plan',
+                  SubscriptionManager.monthlyPrice,
+                  'per month',
+                  false,
+                  !_isYearly,
+                ),
+              ),
+              SizedBox(height: 8),
+              GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _isYearly = true;
+                  });
+                },
+                child: _buildPricingCard(
+                  'Yearly Plan',
+                  SubscriptionManager.yearlyPrice,
+                  'per year (Save ${SubscriptionManager.yearlySavings}!)',
+                  true,
+                  _isYearly,
+                ),
+              ),
+              SizedBox(height: 8),
+              
+              Center(
+                child: Text(
+                  'Cancel anytime. Auto-renews.',
+                  style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+                ),
               ),
             ],
           ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Maybe Later'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              // Start trial first
-              final started = await manager.startTrial();
-              if (started && context.mounted) {
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text('Maybe Later'),
+        ),
+        ElevatedButton(
+          onPressed: () async {
+            Navigator.pop(context);
+            // Start trial first
+            final started = await manager.startTrial();
+            if (started && context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('🎉 ${SubscriptionManager.trialDays}-day free trial activated!'),
+                  backgroundColor: Colors.green,
+                ),
+              );
+            } else if (context.mounted) {
+              // If trial already used, proceed to purchase
+              final productId = _isYearly 
+                  ? SubscriptionManager.yearlyProductId 
+                  : SubscriptionManager.monthlyProductId;
+              
+              final product = manager.products.firstWhere(
+                (p) => p.id == productId,
+                orElse: () => manager.products.first,
+              );
+              
+              final success = await manager.buyProduct(product);
+              if (success && context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text('🎉 $trialDays-day free trial activated!'),
-                    backgroundColor: Colors.green,
+                    content: Text('Processing purchase...'),
+                    backgroundColor: Colors.blue,
                   ),
                 );
               }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.blue,
-              foregroundColor: Colors.white,
-            ),
-            child: Text('Start Free Trial'),
+            }
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.blue,
+            foregroundColor: Colors.white,
           ),
-        ],
-      ),
+          child: Text('Start Free Trial'),
+        ),
+      ],
     );
   }
 
-  static Widget _buildFeature(String text) {
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        children: [
-          Icon(Icons.check_circle, color: Colors.green, size: 20),
-          SizedBox(width: 8),
-          Expanded(child: Text(text)),
-        ],
-      ),
-    );
-  }
-
-  static Widget _buildPricingCard(
+  Widget _buildPricingCard(
     String title,
     String price,
     String subtitle,
     bool recommended,
+    bool isSelected,
   ) {
     return Container(
-      padding: EdgeInsets.all(12),
+      padding: EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: recommended ? Colors.blue.shade50 : Colors.grey.shade100,
+        color: isSelected 
+            ? Colors.blue.shade100 
+            : (recommended ? Colors.blue.shade50 : Colors.grey.shade100),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
-          color: recommended ? Colors.blue : Colors.grey.shade300,
-          width: recommended ? 2 : 1,
+          color: isSelected 
+              ? Colors.blue.shade700 
+              : (recommended ? Colors.blue : Colors.grey.shade300),
+          width: isSelected ? 3 : (recommended ? 2 : 1),
         ),
       ),
       child: Column(
@@ -419,24 +490,35 @@ class SubscriptionManager {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                title,
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                ),
+              Row(
+                children: [
+                  // Selection indicator
+                  Icon(
+                    isSelected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
+                    color: isSelected ? Colors.blue.shade700 : Colors.grey,
+                    size: 20,
+                  ),
+                  SizedBox(width: 8),
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
               ),
               if (recommended)
                 Container(
-                  padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: EdgeInsets.symmetric(horizontal: 6, vertical: 3),
                   decoration: BoxDecoration(
                     color: Colors.amber,
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
                     'BEST VALUE',
                     style: TextStyle(
-                      fontSize: 10,
+                      fontSize: 9,
                       fontWeight: FontWeight.bold,
                       color: Colors.black,
                     ),
@@ -445,17 +527,25 @@ class SubscriptionManager {
             ],
           ),
           SizedBox(height: 4),
-          Text(
-            price,
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: Colors.blue,
+          Padding(
+            padding: EdgeInsets.only(left: 28),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  price,
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.blue,
+                  ),
+                ),
+                Text(
+                  subtitle,
+                  style: TextStyle(fontSize: 11, color: Colors.grey[700]),
+                ),
+              ],
             ),
-          ),
-          Text(
-            subtitle,
-            style: TextStyle(fontSize: 12, color: Colors.grey[700]),
           ),
         ],
       ),

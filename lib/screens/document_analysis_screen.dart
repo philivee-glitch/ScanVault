@@ -285,25 +285,9 @@ class _DocumentAnalysisScreenState extends State<DocumentAnalysisScreen> {
         Expanded(
           child: _chatHistory.isEmpty
               ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.chat_bubble_outline, size: 80, color: Colors.grey),
-                      SizedBox(height: 16),
-                      Text(
-                        'Ask questions about this document',
-                        style: TextStyle(fontSize: 16, color: Colors.grey[600]),
-                      ),
-                      SizedBox(height: 8),
-                      Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 32),
-                        child: Text(
-                          'Try:\n• "What is this document about?"\n• "Summarize this document"\n• "What dates are mentioned?"',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(fontSize: 14, color: Colors.grey[500]),
-                        ),
-                      ),
-                    ],
+                  child: Text(
+                    'Ask a question below',
+                    style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                   ),
                 )
               : ListView.builder(
