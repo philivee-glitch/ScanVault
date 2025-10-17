@@ -33,6 +33,10 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
   List<String> _folders = [];
   bool _isLoading = true;
   String? _selectedFolder;
+  
+  // Multi-select mode
+  bool _isSelectionMode = false;
+  Set<String> _selectedDocuments = {};
 
   @override
   void initState() {
@@ -108,55 +112,121 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
     }
   }
 
+  void _toggleSelectionMode() {
+    setState(() {
+      _isSelectionMode = !_isSelectionMode;
+      if (!_isSelectionMode) {
+        _selectedDocuments.clear();
+      }
+    });
+  }
+
+  void _toggleDocumentSelection(String path) {
+    setState(() {
+      if (_selectedDocuments.contains(path)) {
+        _selectedDocuments.remove(path);
+      } else {
+        _selectedDocuments.add(path);
+      }
+      
+      // Exit selection mode if nothing selected
+      if (_selectedDocuments.isEmpty) {
+        _isSelectionMode = false;
+      }
+    });
+  }
+
+  void _selectAll() {
+    setState(() {
+      _selectedDocuments = _documents.map((doc) => doc.path).toSet();
+    });
+  }
+
+  void _deselectAll() {
+    setState(() {
+      _selectedDocuments.clear();
+      _isSelectionMode = false;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(_selectedFolder ?? 'Documents'),
-        leading: _selectedFolder != null
+        title: Text(_isSelectionMode 
+            ? '${_selectedDocuments.length} selected'
+            : _selectedFolder ?? 'Documents'),
+        leading: _isSelectionMode
             ? IconButton(
-                icon: Icon(Icons.arrow_back),
-                onPressed: () {
-                  setState(() => _selectedFolder = null);
-                  _loadDocuments();
-                },
+                icon: Icon(Icons.close),
+                onPressed: _deselectAll,
               )
-            : null,
-        actions: [
-          IconButton(
-            icon: Icon(Icons.search),
-            onPressed: () {
-              showSearch(
-                context: context,
-                delegate: DocumentSearchDelegate(_documents),
-              );
-            },
-          ),
-        ],
+            : _selectedFolder != null
+                ? IconButton(
+                    icon: Icon(Icons.arrow_back),
+                    onPressed: () {
+                      setState(() => _selectedFolder = null);
+                      _loadDocuments();
+                    },
+                  )
+                : null,
+        actions: _isSelectionMode
+            ? [
+                if (_selectedDocuments.length < _documents.length)
+                  IconButton(
+                    icon: Icon(Icons.select_all),
+                    onPressed: _selectAll,
+                    tooltip: 'Select All',
+                  ),
+                if (_selectedFolder == null)
+                  IconButton(
+                    icon: Icon(Icons.drive_file_move),
+                    onPressed: _showBatchMoveDialog,
+                    tooltip: 'Move to Folder',
+                  ),
+                IconButton(
+                  icon: Icon(Icons.delete),
+                  onPressed: _showBatchDeleteDialog,
+                  tooltip: 'Delete',
+                ),
+              ]
+            : [
+                IconButton(
+                  icon: Icon(Icons.search),
+                  onPressed: () {
+                    showSearch(
+                      context: context,
+                      delegate: DocumentSearchDelegate(_documents),
+                    );
+                  },
+                ),
+              ],
       ),
       body: _isLoading
           ? Center(child: CircularProgressIndicator())
           : _buildBody(),
-      floatingActionButton: Column(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          if (_selectedFolder == null)
-            FloatingActionButton(
-              heroTag: 'create_folder',
-              onPressed: _showCreateFolderDialog,
-              child: Icon(Icons.create_new_folder),
-              mini: true,
-              backgroundColor: Colors.orange,
+      floatingActionButton: _isSelectionMode
+          ? null
+          : Column(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                if (_selectedFolder == null)
+                  FloatingActionButton(
+                    heroTag: 'create_folder',
+                    onPressed: _showCreateFolderDialog,
+                    child: Icon(Icons.create_new_folder),
+                    mini: true,
+                    backgroundColor: Colors.orange,
+                  ),
+                SizedBox(height: 8),
+                FloatingActionButton(
+                  heroTag: 'scan',
+                  onPressed: () => Navigator.pop(context),
+                  child: Icon(Icons.add),
+                  backgroundColor: Colors.blue,
+                ),
+              ],
             ),
-          SizedBox(height: 8),
-          FloatingActionButton(
-            heroTag: 'scan',
-            onPressed: () => Navigator.pop(context),
-            child: Icon(Icons.add),
-            backgroundColor: Colors.blue,
-          ),
-        ],
-      ),
     );
   }
 
@@ -270,10 +340,18 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
   }
 
   Widget _buildDocumentCard(Document doc) {
+    final isSelected = _selectedDocuments.contains(doc.path);
+    
     return Card(
       margin: EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+      color: isSelected ? Colors.blue.shade50 : null,
       child: ListTile(
-        leading: Icon(Icons.picture_as_pdf, color: Colors.red, size: 40),
+        leading: _isSelectionMode
+            ? Checkbox(
+                value: isSelected,
+                onChanged: (value) => _toggleDocumentSelection(doc.path),
+              )
+            : Icon(Icons.picture_as_pdf, color: Colors.red, size: 40),
         title: Text(
           doc.name.replaceAll('.pdf', ''),
           style: TextStyle(fontWeight: FontWeight.w500),
@@ -282,82 +360,213 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
           '${_formatDate(doc.date)} • ${_formatSize(doc.size)}',
           style: TextStyle(fontSize: 12),
         ),
-        trailing: PopupMenuButton(
-          itemBuilder: (context) => [
-            PopupMenuItem(
-              value: 'open',
-              child: Row(
-                children: [
-                  Icon(Icons.open_in_new, size: 20),
-                  SizedBox(width: 8),
-                  Text('Open'),
-                ],
-              ),
-            ),
-            PopupMenuItem(
-              value: 'share',
-              child: Row(
-                children: [
-                  Icon(Icons.share, size: 20),
-                  SizedBox(width: 8),
-                  Text('Share'),
-                ],
-              ),
-            ),
-            if (_selectedFolder == null)
-              PopupMenuItem(
-                value: 'move',
-                child: Row(
-                  children: [
-                    Icon(Icons.drive_file_move, size: 20),
-                    SizedBox(width: 8),
-                    Text('Move to Folder'),
-                  ],
-                ),
-              ),
-            PopupMenuItem(
-              value: 'delete',
-              child: Row(
-                children: [
-                  Icon(Icons.delete, size: 20, color: Colors.red),
-                  SizedBox(width: 8),
-                  Text('Delete', style: TextStyle(color: Colors.red)),
-                ],
-              ),
-            ),
-          ],
-          onSelected: (value) async {
-            switch (value) {
-              case 'open':
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => PdfPreviewScreen(pdfPath: doc.path),
+        trailing: _isSelectionMode
+            ? null
+            : PopupMenuButton(
+                itemBuilder: (context) => [
+                  PopupMenuItem(
+                    value: 'open',
+                    child: Row(
+                      children: [
+                        Icon(Icons.open_in_new, size: 20),
+                        SizedBox(width: 8),
+                        Text('Open'),
+                      ],
+                    ),
                   ),
-                );
-                break;
-              case 'share':
-                await Share.shareXFiles([XFile(doc.path)]);
-                break;
-              case 'move':
-                _showMoveToFolderDialog(doc);
-                break;
-              case 'delete':
-                _deleteDocument(doc);
-                break;
-            }
-          },
-        ),
+                  PopupMenuItem(
+                    value: 'share',
+                    child: Row(
+                      children: [
+                        Icon(Icons.share, size: 20),
+                        SizedBox(width: 8),
+                        Text('Share'),
+                      ],
+                    ),
+                  ),
+                  if (_selectedFolder == null)
+                    PopupMenuItem(
+                      value: 'move',
+                      child: Row(
+                        children: [
+                          Icon(Icons.drive_file_move, size: 20),
+                          SizedBox(width: 8),
+                          Text('Move to Folder'),
+                        ],
+                      ),
+                    ),
+                  PopupMenuItem(
+                    value: 'delete',
+                    child: Row(
+                      children: [
+                        Icon(Icons.delete, size: 20, color: Colors.red),
+                        SizedBox(width: 8),
+                        Text('Delete', style: TextStyle(color: Colors.red)),
+                      ],
+                    ),
+                  ),
+                ],
+                onSelected: (value) async {
+                  switch (value) {
+                    case 'open':
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => PdfPreviewScreen(pdfPath: doc.path),
+                        ),
+                      );
+                      break;
+                    case 'share':
+                      await Share.shareXFiles([XFile(doc.path)]);
+                      break;
+                    case 'move':
+                      _showMoveToFolderDialog(doc);
+                      break;
+                    case 'delete':
+                      _deleteDocument(doc);
+                      break;
+                  }
+                },
+              ),
         onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => PdfPreviewScreen(pdfPath: doc.path),
-            ),
-          );
+          if (_isSelectionMode) {
+            _toggleDocumentSelection(doc.path);
+          } else {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => PdfPreviewScreen(pdfPath: doc.path),
+              ),
+            );
+          }
+        },
+        onLongPress: () {
+          if (!_isSelectionMode) {
+            setState(() {
+              _isSelectionMode = true;
+              _selectedDocuments.add(doc.path);
+            });
+          }
         },
       ),
     );
+  }
+
+  void _showBatchMoveDialog() {
+    if (_folders.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('No folders available. Create a folder first.')),
+      );
+      return;
+    }
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Move ${_selectedDocuments.length} document(s)'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: _folders.map((folder) {
+            return ListTile(
+              leading: Icon(Icons.folder),
+              title: Text(folder),
+              onTap: () async {
+                await _batchMoveToFolder(folder);
+                Navigator.pop(context);
+              },
+            );
+          }).toList(),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Cancel'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _batchMoveToFolder(String folderName) async {
+    try {
+      final directory = await getApplicationDocumentsDirectory();
+      int moved = 0;
+
+      for (String docPath in _selectedDocuments) {
+        final doc = _documents.firstWhere((d) => d.path == docPath);
+        final newPath = '${directory.path}/documents/$folderName/${doc.name}';
+        await File(doc.path).rename(newPath);
+        moved++;
+      }
+
+      setState(() {
+        _selectedDocuments.clear();
+        _isSelectionMode = false;
+      });
+      
+      await _loadDocuments();
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Moved $moved document(s) to "$folderName"')),
+      );
+    } catch (e) {
+      debugPrint('Batch move error: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error moving documents')),
+      );
+    }
+  }
+
+  void _showBatchDeleteDialog() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Delete Documents'),
+        content: Text('Delete ${_selectedDocuments.length} document(s)?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      await _batchDelete();
+    }
+  }
+
+  Future<void> _batchDelete() async {
+    try {
+      int deleted = 0;
+
+      for (String docPath in _selectedDocuments) {
+        await File(docPath).delete();
+        deleted++;
+      }
+
+      setState(() {
+        _selectedDocuments.clear();
+        _isSelectionMode = false;
+      });
+      
+      await _loadDocuments();
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Deleted $deleted document(s)')),
+      );
+    } catch (e) {
+      debugPrint('Batch delete error: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error deleting documents')),
+      );
+    }
   }
 
   void _showCreateFolderDialog() {
