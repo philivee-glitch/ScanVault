@@ -32,6 +32,7 @@ class _EnhancementScreenState extends State<EnhancementScreen> {
   int _rotation = 0;
   bool _isProcessing = false;
   String? _processedImagePath;
+  List<String> _allPages = [];
   
   final List<String> _filters = ['Original', 'B&W', 'Grayscale', 'Color+'];
 
@@ -39,6 +40,7 @@ class _EnhancementScreenState extends State<EnhancementScreen> {
   void initState() {
     super.initState();
     _processedImagePath = widget.imagePath;
+    _allPages = [widget.imagePath, ...(widget.additionalPages ?? [])];
   }
 
   @override
@@ -405,7 +407,7 @@ class _EnhancementScreenState extends State<EnhancementScreen> {
   void _showSuccessDialog(String pdfPath, String fileName, String? folderName) {
     showDialog(
       context: context,
-      barrierDismissible: true, // Allow tapping outside to close
+      barrierDismissible: true,
       builder: (context) => AlertDialog(
         title: Row(
           children: [
@@ -415,7 +417,7 @@ class _EnhancementScreenState extends State<EnhancementScreen> {
             IconButton(
               icon: Icon(Icons.close, size: 20),
               onPressed: () {
-                Navigator.pop(context); // Close dialog
+                Navigator.pop(context);
                 Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(builder: (context) => DocumentsScreen()),
@@ -460,7 +462,7 @@ class _EnhancementScreenState extends State<EnhancementScreen> {
         actions: [
           TextButton(
             onPressed: () {
-              Navigator.pop(context); // Close dialog
+              Navigator.pop(context);
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(builder: (context) => DocumentsScreen()),
@@ -470,7 +472,7 @@ class _EnhancementScreenState extends State<EnhancementScreen> {
           ),
           TextButton.icon(
             onPressed: () {
-              Navigator.pop(context); // Close dialog
+              Navigator.pop(context);
               Navigator.push(
                 context,
                 MaterialPageRoute(
@@ -483,7 +485,7 @@ class _EnhancementScreenState extends State<EnhancementScreen> {
           ),
           ElevatedButton.icon(
             onPressed: () {
-              Navigator.pop(context); // Close dialog
+              Navigator.pop(context);
               Navigator.push(
                 context,
                 MaterialPageRoute(

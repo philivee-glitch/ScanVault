@@ -280,6 +280,122 @@ Respond in this JSON format:
     return '${text.substring(0, maxLength)}...';
   }
 
+  Future<String> summarizeDocument(String text) async {
+    if (text.isEmpty) {
+      return 'No text available to summarize.';
+    }
+
+    // Use existing analyzeDocument method for detailed summary
+    try {
+      final result = await analyzeDocument(text);
+      if (result != null) {
+        final buffer = StringBuffer();
+        buffer.writeln('📄 ${result.category.name}\n');
+        buffer.writeln(result.summary);
+        
+        if (result.keyInfo.isNotEmpty) {
+          buffer.writeln('\n📋 Key Details:');
+          result.keyInfo.forEach((key, value) {
+            buffer.writeln('• ${key.toUpperCase()}: $value');
+          });
+        }
+        
+        if (result.tags.isNotEmpty) {
+          buffer.writeln('\n🏷️ Tags: ${result.tags.join(', ')}');
+        }
+        
+        buffer.writeln('\n📊 Confidence: ${(result.confidence * 100).toStringAsFixed(0)}%');
+        
+        return buffer.toString();
+      }
+    } catch (e) {
+      debugPrint('Summarize error: $e');
+    }
+
+    // Fallback to basic summary
+    final sentences = text.split(RegExp(r'[.!?]+'));
+    final goodSentences = sentences.map((s) => s.trim()).where((s) => s.length > 10).take(5);
+    
+    if (goodSentences.isEmpty) {
+      return 'Document text is too short to summarize effectively.';
+    }
+    
+    return goodSentences.join('. ') + '.';
+  }
+
+  Future<String> answerQuestion(String documentText, String question) async {
+    if (documentText.isEmpty) {
+      return 'No document text available to answer questions.';
+    }
+
+    try {
+      final lowerQuestion = question.toLowerCase();
+      
+      // Handle common question patterns
+      if (lowerQuestion.contains('what') && (lowerQuestion.contains('about') || lowerQuestion.contains('document'))) {
+        final result = await analyzeDocument(documentText);
+        if (result != null) {
+          return 'This is a ${result.category.name}. ${result.summary}';
+        }
+        
+        // Fallback
+        final sentences = documentText.split(RegExp(r'[.!?]+'));
+        final firstSentences = sentences.take(2).map((s) => s.trim()).where((s) => s.isNotEmpty).join('. ');
+        return 'Based on the document: $firstSentences.';
+      }
+      
+      if (lowerQuestion.contains('summarize') || lowerQuestion.contains('summary')) {
+        return await summarizeDocument(documentText);
+      }
+      
+      if (lowerQuestion.contains('date')) {
+        final datePattern = RegExp(r'\d{1,2}[/-]\d{1,2}[/-]\d{2,4}');
+        final dates = datePattern.allMatches(documentText).map((m) => m.group(0)).toSet();
+        if (dates.isNotEmpty) {
+          return 'Dates mentioned: ${dates.join(', ')}';
+        }
+        return 'No dates found in this document.';
+      }
+      
+      if (lowerQuestion.contains('amount') || lowerQuestion.contains('price') || lowerQuestion.contains('cost')) {
+        final amountPattern = RegExp(r'[\$€£]\s?\d+(?:,\d{3})*(?:\.\d{2})?');
+        final amounts = amountPattern.allMatches(documentText).map((m) => m.group(0)).toSet();
+        if (amounts.isNotEmpty) {
+          return 'Amounts mentioned: ${amounts.join(', ')}';
+        }
+        return 'No monetary amounts found in this document.';
+      }
+      
+      // Keyword search in document
+      final keywords = question.split(' ').where((w) => w.length > 3 && !['what', 'when', 'where', 'which', 'this', 'that', 'does'].contains(w.toLowerCase())).toList();
+      
+      if (keywords.isNotEmpty) {
+        final sentences = documentText.split(RegExp(r'[.!?]+'));
+        final relevantSentences = <String>[];
+        
+        for (final sentence in sentences) {
+          final lowerSentence = sentence.toLowerCase();
+          for (final keyword in keywords) {
+            if (lowerSentence.contains(keyword.toLowerCase()) && sentence.trim().length > 20) {
+              relevantSentences.add(sentence.trim());
+              break;
+            }
+          }
+          if (relevantSentences.length >= 2) break;
+        }
+        
+        if (relevantSentences.isNotEmpty) {
+          return 'Based on the document:\n\n${relevantSentences.join('.\n\n')}.';
+        }
+      }
+      
+      return 'I couldn\'t find specific information about that. Try asking:\n\n• "What is this document about?"\n• "Summarize this document"\n• "What dates are mentioned?"\n• "What amounts are in this document?"';
+    } catch (e) {
+      debugPrint('Answer question error: $e');
+      return 'Error processing your question. Please try rephrasing it.';
+    }
+  }
+
   Future<List<String>> smartSearch(String query, List<String> documents) async {
     // Simple keyword matching for now
     // In production, this would use AI-powered semantic search

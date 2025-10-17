@@ -33,15 +33,15 @@
     },
     {
       "name": "camera",
-      "rootUri": "file:///C:/Users/phili/AppData/Local/Pub/Cache/hosted/pub.dev/camera-0.11.2",
+      "rootUri": "file:///C:/Users/phili/AppData/Local/Pub/Cache/hosted/pub.dev/camera-0.10.6",
       "packageUri": "lib/",
-      "languageVersion": "3.6"
+      "languageVersion": "3.2"
     },
     {
-      "name": "camera_android_camerax",
-      "rootUri": "file:///C:/Users/phili/AppData/Local/Pub/Cache/hosted/pub.dev/camera_android_camerax-0.6.23",
+      "name": "camera_android",
+      "rootUri": "file:///C:/Users/phili/AppData/Local/Pub/Cache/hosted/pub.dev/camera_android-0.10.10+10",
       "packageUri": "lib/",
-      "languageVersion": "3.8"
+      "languageVersion": "3.9"
     },
     {
       "name": "camera_avfoundation",
@@ -98,6 +98,12 @@
       "languageVersion": "3.0"
     },
     {
+      "name": "cupertino_icons",
+      "rootUri": "file:///C:/Users/phili/AppData/Local/Pub/Cache/hosted/pub.dev/cupertino_icons-1.0.8",
+      "packageUri": "lib/",
+      "languageVersion": "3.1"
+    },
+    {
       "name": "fake_async",
       "rootUri": "file:///C:/Users/phili/AppData/Local/Pub/Cache/hosted/pub.dev/fake_async-1.3.3",
       "packageUri": "lib/",
@@ -116,6 +122,30 @@
       "languageVersion": "3.0"
     },
     {
+      "name": "file_selector_linux",
+      "rootUri": "file:///C:/Users/phili/AppData/Local/Pub/Cache/hosted/pub.dev/file_selector_linux-0.9.3+2",
+      "packageUri": "lib/",
+      "languageVersion": "3.3"
+    },
+    {
+      "name": "file_selector_macos",
+      "rootUri": "file:///C:/Users/phili/AppData/Local/Pub/Cache/hosted/pub.dev/file_selector_macos-0.9.4+4",
+      "packageUri": "lib/",
+      "languageVersion": "3.7"
+    },
+    {
+      "name": "file_selector_platform_interface",
+      "rootUri": "file:///C:/Users/phili/AppData/Local/Pub/Cache/hosted/pub.dev/file_selector_platform_interface-2.6.2",
+      "packageUri": "lib/",
+      "languageVersion": "3.0"
+    },
+    {
+      "name": "file_selector_windows",
+      "rootUri": "file:///C:/Users/phili/AppData/Local/Pub/Cache/hosted/pub.dev/file_selector_windows-0.9.3+4",
+      "packageUri": "lib/",
+      "languageVersion": "3.4"
+    },
+    {
       "name": "fixnum",
       "rootUri": "file:///C:/Users/phili/AppData/Local/Pub/Cache/hosted/pub.dev/fixnum-1.1.1",
       "packageUri": "lib/",
@@ -129,7 +159,7 @@
     },
     {
       "name": "flutter_lints",
-      "rootUri": "file:///C:/Users/phili/AppData/Local/Pub/Cache/hosted/pub.dev/flutter_lints-4.0.0",
+      "rootUri": "file:///C:/Users/phili/AppData/Local/Pub/Cache/hosted/pub.dev/flutter_lints-3.0.2",
       "packageUri": "lib/",
       "languageVersion": "3.1"
     },
@@ -158,6 +188,18 @@
       "languageVersion": "3.8"
     },
     {
+      "name": "google_mlkit_commons",
+      "rootUri": "file:///C:/Users/phili/AppData/Local/Pub/Cache/hosted/pub.dev/google_mlkit_commons-0.6.1",
+      "packageUri": "lib/",
+      "languageVersion": "2.16"
+    },
+    {
+      "name": "google_mlkit_text_recognition",
+      "rootUri": "file:///C:/Users/phili/AppData/Local/Pub/Cache/hosted/pub.dev/google_mlkit_text_recognition-0.11.0",
+      "packageUri": "lib/",
+      "languageVersion": "2.16"
+    },
+    {
       "name": "http",
       "rootUri": "file:///C:/Users/phili/AppData/Local/Pub/Cache/hosted/pub.dev/http-1.5.0",
       "packageUri": "lib/",
@@ -174,6 +216,54 @@
       "rootUri": "file:///C:/Users/phili/AppData/Local/Pub/Cache/hosted/pub.dev/image-4.5.4",
       "packageUri": "lib/",
       "languageVersion": "3.0"
+    },
+    {
+      "name": "image_picker",
+      "rootUri": "file:///C:/Users/phili/AppData/Local/Pub/Cache/hosted/pub.dev/image_picker-1.2.0",
+      "packageUri": "lib/",
+      "languageVersion": "3.6"
+    },
+    {
+      "name": "image_picker_android",
+      "rootUri": "file:///C:/Users/phili/AppData/Local/Pub/Cache/hosted/pub.dev/image_picker_android-0.8.13+5",
+      "packageUri": "lib/",
+      "languageVersion": "3.9"
+    },
+    {
+      "name": "image_picker_for_web",
+      "rootUri": "file:///C:/Users/phili/AppData/Local/Pub/Cache/hosted/pub.dev/image_picker_for_web-3.1.0",
+      "packageUri": "lib/",
+      "languageVersion": "3.6"
+    },
+    {
+      "name": "image_picker_ios",
+      "rootUri": "file:///C:/Users/phili/AppData/Local/Pub/Cache/hosted/pub.dev/image_picker_ios-0.8.13",
+      "packageUri": "lib/",
+      "languageVersion": "3.6"
+    },
+    {
+      "name": "image_picker_linux",
+      "rootUri": "file:///C:/Users/phili/AppData/Local/Pub/Cache/hosted/pub.dev/image_picker_linux-0.2.2",
+      "packageUri": "lib/",
+      "languageVersion": "3.6"
+    },
+    {
+      "name": "image_picker_macos",
+      "rootUri": "file:///C:/Users/phili/AppData/Local/Pub/Cache/hosted/pub.dev/image_picker_macos-0.2.2",
+      "packageUri": "lib/",
+      "languageVersion": "3.6"
+    },
+    {
+      "name": "image_picker_platform_interface",
+      "rootUri": "file:///C:/Users/phili/AppData/Local/Pub/Cache/hosted/pub.dev/image_picker_platform_interface-2.11.0",
+      "packageUri": "lib/",
+      "languageVersion": "3.6"
+    },
+    {
+      "name": "image_picker_windows",
+      "rootUri": "file:///C:/Users/phili/AppData/Local/Pub/Cache/hosted/pub.dev/image_picker_windows-0.2.2",
+      "packageUri": "lib/",
+      "languageVersion": "3.6"
     },
     {
       "name": "in_app_purchase",
@@ -225,9 +315,9 @@
     },
     {
       "name": "lints",
-      "rootUri": "file:///C:/Users/phili/AppData/Local/Pub/Cache/hosted/pub.dev/lints-4.0.0",
+      "rootUri": "file:///C:/Users/phili/AppData/Local/Pub/Cache/hosted/pub.dev/lints-3.0.0",
       "packageUri": "lib/",
-      "languageVersion": "3.1"
+      "languageVersion": "3.0"
     },
     {
       "name": "matcher",
@@ -302,6 +392,18 @@
       "languageVersion": "2.17"
     },
     {
+      "name": "package_info_plus",
+      "rootUri": "file:///C:/Users/phili/AppData/Local/Pub/Cache/hosted/pub.dev/package_info_plus-8.3.1",
+      "packageUri": "lib/",
+      "languageVersion": "3.3"
+    },
+    {
+      "name": "package_info_plus_platform_interface",
+      "rootUri": "file:///C:/Users/phili/AppData/Local/Pub/Cache/hosted/pub.dev/package_info_plus_platform_interface-3.2.1",
+      "packageUri": "lib/",
+      "languageVersion": "2.18"
+    },
+    {
       "name": "path",
       "rootUri": "file:///C:/Users/phili/AppData/Local/Pub/Cache/hosted/pub.dev/path-1.9.1",
       "packageUri": "lib/",
@@ -354,12 +456,6 @@
       "rootUri": "file:///C:/Users/phili/AppData/Local/Pub/Cache/hosted/pub.dev/pdf-3.11.3",
       "packageUri": "lib/",
       "languageVersion": "2.19"
-    },
-    {
-      "name": "pdf_widget_wrapper",
-      "rootUri": "file:///C:/Users/phili/AppData/Local/Pub/Cache/hosted/pub.dev/pdf_widget_wrapper-1.0.4",
-      "packageUri": "lib/",
-      "languageVersion": "2.18"
     },
     {
       "name": "permission_handler",
@@ -420,12 +516,6 @@
       "rootUri": "file:///C:/Users/phili/AppData/Local/Pub/Cache/hosted/pub.dev/posix-6.0.3",
       "packageUri": "lib/",
       "languageVersion": "3.0"
-    },
-    {
-      "name": "printing",
-      "rootUri": "file:///C:/Users/phili/AppData/Local/Pub/Cache/hosted/pub.dev/printing-5.14.2",
-      "packageUri": "lib/",
-      "languageVersion": "3.3"
     },
     {
       "name": "qr",
@@ -548,10 +638,34 @@
       "languageVersion": "3.5"
     },
     {
+      "name": "url_launcher",
+      "rootUri": "file:///C:/Users/phili/AppData/Local/Pub/Cache/hosted/pub.dev/url_launcher-6.3.2",
+      "packageUri": "lib/",
+      "languageVersion": "3.6"
+    },
+    {
+      "name": "url_launcher_android",
+      "rootUri": "file:///C:/Users/phili/AppData/Local/Pub/Cache/hosted/pub.dev/url_launcher_android-6.3.24",
+      "packageUri": "lib/",
+      "languageVersion": "3.9"
+    },
+    {
+      "name": "url_launcher_ios",
+      "rootUri": "file:///C:/Users/phili/AppData/Local/Pub/Cache/hosted/pub.dev/url_launcher_ios-6.3.4",
+      "packageUri": "lib/",
+      "languageVersion": "3.7"
+    },
+    {
       "name": "url_launcher_linux",
       "rootUri": "file:///C:/Users/phili/AppData/Local/Pub/Cache/hosted/pub.dev/url_launcher_linux-3.2.1",
       "packageUri": "lib/",
       "languageVersion": "3.3"
+    },
+    {
+      "name": "url_launcher_macos",
+      "rootUri": "file:///C:/Users/phili/AppData/Local/Pub/Cache/hosted/pub.dev/url_launcher_macos-3.2.3",
+      "packageUri": "lib/",
+      "languageVersion": "3.7"
     },
     {
       "name": "url_launcher_platform_interface",
@@ -617,7 +731,7 @@
       "name": "scanvault_premium",
       "rootUri": "../",
       "packageUri": "lib/",
-      "languageVersion": "3.5"
+      "languageVersion": "3.0"
     }
   ],
   "generator": "pub",

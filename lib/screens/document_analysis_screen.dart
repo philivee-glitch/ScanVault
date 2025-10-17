@@ -1,8 +1,8 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../ocr_service.dart';
 import '../ai_service.dart';
-import '../subscription_manager.dart';
 
 class DocumentAnalysisScreen extends StatefulWidget {
   final String imagePath;
@@ -21,58 +21,129 @@ class DocumentAnalysisScreen extends StatefulWidget {
 class _DocumentAnalysisScreenState extends State<DocumentAnalysisScreen> {
   final OCRService _ocrService = OCRService();
   final AIService _aiService = AIService();
-  final SubscriptionManager _subscriptionManager = SubscriptionManager();
-
-  OCRResult? _ocrResult;
-  AIAnalysisResult? _aiResult;
-  bool _isProcessing = true;
-  String? _error;
-  int _currentTab = 0;
+  final TextEditingController _questionController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
+  
+  String _extractedText = '';
+  String _summary = '';
+  bool _isLoadingOCR = true;
+  bool _isLoadingSummary = true;
+  bool _isAskingQuestion = false;
+  
+  List<ChatMessage> _chatHistory = [];
 
   @override
   void initState() {
     super.initState();
-    _processDocument();
+    _performOCR();
   }
 
-  Future<void> _processDocument() async {
-    setState(() {
-      _isProcessing = true;
-      _error = null;
-    });
+  @override
+  void dispose() {
+    _questionController.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
 
+  Future<void> _performOCR() async {
     try {
-      // Step 1: OCR (available to all users)
-      _ocrResult = await _ocrService.extractText(widget.imagePath);
-
-      if (_ocrResult == null) {
-        setState(() {
-          _error = 'Could not extract text from document';
-          _isProcessing = false;
-        });
-        return;
-      }
-
-      // Step 2: AI Analysis (Premium only)
-      if (_subscriptionManager.isPremium && _ocrResult!.text.isNotEmpty) {
-        _aiResult = await _aiService.analyzeDocument(_ocrResult!.text);
-        
-        // Save analysis for future reference
-        if (_aiResult != null) {
-          await _aiService.saveAnalysis(
-            widget.documentName,
-            _aiResult!,
-          );
-        }
-      }
-
+      final result = await _ocrService.extractText(widget.imagePath);
+      final text = result?.text ?? '';
       setState(() {
-        _isProcessing = false;
+        _extractedText = text;
+        _isLoadingOCR = false;
+      });
+      
+      if (text.isNotEmpty) {
+        _generateSummary();
+      } else {
+        setState(() {
+          _summary = 'No text could be extracted from this document.';
+          _isLoadingSummary = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _extractedText = 'Error extracting text: $e';
+        _isLoadingOCR = false;
+        _summary = 'Could not analyze document due to OCR error.';
+        _isLoadingSummary = false;
+      });
+    }
+  }
+
+  Future<void> _generateSummary() async {
+    try {
+      final summary = await _aiService.summarizeDocument(_extractedText);
+      setState(() {
+        _summary = summary;
+        _isLoadingSummary = false;
       });
     } catch (e) {
       setState(() {
-        _error = 'Error processing document: $e';
-        _isProcessing = false;
+        _summary = 'Error generating summary. Please check your internet connection.';
+        _isLoadingSummary = false;
+      });
+    }
+  }
+
+  Future<void> _askQuestion() async {
+    final question = _questionController.text.trim();
+    if (question.isEmpty || _isAskingQuestion) return;
+
+    // Add user question to chat
+    setState(() {
+      _chatHistory.add(ChatMessage(
+        text: question,
+        isUser: true,
+        timestamp: DateTime.now(),
+      ));
+      _isAskingQuestion = true;
+    });
+
+    _questionController.clear();
+    
+    // Scroll to bottom
+    Future.delayed(Duration(milliseconds: 100), () {
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
+    });
+
+    try {
+      final answer = await _aiService.answerQuestion(_extractedText, question);
+      
+      setState(() {
+        _chatHistory.add(ChatMessage(
+          text: answer,
+          isUser: false,
+          timestamp: DateTime.now(),
+        ));
+        _isAskingQuestion = false;
+      });
+
+      // Scroll to bottom again
+      Future.delayed(Duration(milliseconds: 100), () {
+        if (_scrollController.hasClients) {
+          _scrollController.animateTo(
+            _scrollController.position.maxScrollExtent,
+            duration: Duration(milliseconds: 300),
+            curve: Curves.easeOut,
+          );
+        }
+      });
+    } catch (e) {
+      setState(() {
+        _chatHistory.add(ChatMessage(
+          text: 'Sorry, I couldn\'t answer that question. Please try again.',
+          isUser: false,
+          timestamp: DateTime.now(),
+        ));
+        _isAskingQuestion = false;
       });
     }
   }
@@ -83,658 +154,358 @@ class _DocumentAnalysisScreenState extends State<DocumentAnalysisScreen> {
       appBar: AppBar(
         title: Text('Document Analysis'),
         actions: [
-          if (_ocrResult != null)
-            IconButton(
-              icon: Icon(Icons.save),
-              tooltip: 'Save Text',
-              onPressed: _saveText,
-            ),
-          if (_ocrResult != null)
-            IconButton(
-              icon: Icon(Icons.share),
-              tooltip: 'Share Text',
-              onPressed: _shareText,
-            ),
+          IconButton(
+            icon: Icon(Icons.copy),
+            onPressed: _extractedText.isEmpty ? null : () {
+              Clipboard.setData(ClipboardData(text: _extractedText));
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Text copied to clipboard')),
+              );
+            },
+            tooltip: 'Copy All Text',
+          ),
         ],
       ),
-      body: _buildBody(),
-    );
-  }
-
-  Widget _buildBody() {
-    if (_isProcessing) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            CircularProgressIndicator(),
-            SizedBox(height: 16),
-            Text('Processing document...'),
-            SizedBox(height: 8),
-            Text(
-              'Extracting text with OCR',
-              style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-            ),
-          ],
-        ),
-      );
-    }
-
-    if (_error != null) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.error_outline, size: 64, color: Colors.red),
-            SizedBox(height: 16),
-            Text(
-              _error!,
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.red),
-            ),
-            SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _processDocument,
-              child: Text('Retry'),
-            ),
-          ],
-        ),
-      );
-    }
-
-    if (_ocrResult == null) {
-      return Center(
-        child: Text('No text found in document'),
-      );
-    }
-
-    return Column(
-      children: [
-        // Premium banner for trial users
-        if (_subscriptionManager.isInTrial)
-          Container(
-            width: double.infinity,
-            padding: EdgeInsets.all(12),
-            color: Colors.green.shade50,
-            child: Row(
-              children: [
-                Icon(Icons.celebration, color: Colors.green),
-                SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    '🎉 Trial Active: ${_subscriptionManager.getTrialTimeRemaining()}',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.green.shade900,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        
-        // Tab bar
-        Container(
-          color: Colors.grey[200],
-          child: Row(
-            children: [
-              Expanded(
-                child: _buildTab(
-                  index: 0,
-                  icon: Icons.text_fields,
-                  label: 'Text',
-                ),
-              ),
-              Expanded(
-                child: _buildTab(
-                  index: 1,
-                  icon: Icons.auto_awesome,
-                  label: 'AI Analysis',
-                  isPremium: true,
-                ),
-              ),
-              Expanded(
-                child: _buildTab(
-                  index: 2,
-                  icon: Icons.info_outline,
-                  label: 'Details',
-                ),
-              ),
-            ],
-          ),
-        ),
-        
-        // Content
-        Expanded(
-          child: _buildTabContent(),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildTab({
-    required int index,
-    required IconData icon,
-    required String label,
-    bool isPremium = false,
-  }) {
-    final isSelected = _currentTab == index;
-    
-    return InkWell(
-      onTap: () {
-        if (isPremium && !_subscriptionManager.isPremium) {
-          SubscriptionManager.showSubscriptionDialog(context);
-          return;
-        }
-        setState(() => _currentTab = index);
-      },
-      child: Container(
-        padding: EdgeInsets.symmetric(vertical: 12),
-        decoration: BoxDecoration(
-          color: isSelected ? Colors.white : Colors.transparent,
-          border: Border(
-            bottom: BorderSide(
-              color: isSelected ? Colors.blue : Colors.transparent,
-              width: 3,
-            ),
-          ),
-        ),
-        child: Column(
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  icon,
-                  color: isSelected ? Colors.blue : Colors.grey[600],
-                  size: 20,
-                ),
-                if (isPremium && !_subscriptionManager.isPremium) ...[
-                  SizedBox(width: 4),
-                  Icon(Icons.lock, size: 14, color: Colors.amber),
-                ],
-              ],
-            ),
-            SizedBox(height: 4),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                color: isSelected ? Colors.blue : Colors.grey[600],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTabContent() {
-    switch (_currentTab) {
-      case 0:
-        return _buildTextTab();
-      case 1:
-        return _buildAITab();
-      case 2:
-        return _buildDetailsTab();
-      default:
-        return Container();
-    }
-  }
-
-  Widget _buildTextTab() {
-    return SingleChildScrollView(
-      padding: EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      body: Column(
         children: [
-          Row(
-            children: [
-              Chip(
-                avatar: Icon(Icons.language, size: 16),
-                label: Text(_ocrResult!.language),
-                backgroundColor: Colors.blue.shade50,
-              ),
-              SizedBox(width: 8),
-              Chip(
-                avatar: Icon(Icons.check_circle, size: 16),
-                label: Text('${(_ocrResult!.confidence * 100).toStringAsFixed(0)}%'),
-                backgroundColor: Colors.green.shade50,
-              ),
-            ],
-          ),
-          SizedBox(height: 16),
-          
-          Row(
-            children: [
-              Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: () => _copyToClipboard(_ocrResult!.text),
-                  icon: Icon(Icons.copy, size: 18),
-                  label: Text('Copy All'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue,
-                    foregroundColor: Colors.white,
-                  ),
-                ),
-              ),
-              SizedBox(width: 8),
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: _saveText,
-                  icon: Icon(Icons.save, size: 18),
-                  label: Text('Save TXT'),
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 16),
-          
+          // Document preview
           Container(
-            width: double.infinity,
-            padding: EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.grey[100],
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.grey[300]!),
-            ),
-            child: SelectableText(
-              _ocrResult!.text,
-              style: TextStyle(fontSize: 14, height: 1.6),
-            ),
-          ),
-          SizedBox(height: 16),
-          
-          Text(
-            '${_ocrResult!.text.split('\n').length} lines • ${_ocrResult!.text.split(' ').length} words',
-            style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAITab() {
-    if (!_subscriptionManager.isPremium) {
-      return _buildPremiumUpsell();
-    }
-
-    if (_aiResult == null) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            CircularProgressIndicator(),
-            SizedBox(height: 16),
-            Text('Analyzing document with AI...'),
-          ],
-        ),
-      );
-    }
-
-    return SingleChildScrollView(
-      padding: EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Category badge
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              color: _aiResult!.category.color.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: _aiResult!.category.color, width: 2),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(_aiResult!.category.icon, 
-                     color: _aiResult!.category.color,
-                     size: 24),
-                SizedBox(width: 12),
-                Text(
-                  _aiResult!.category.name,
-                  style: TextStyle(
-                    color: _aiResult!.category.color,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 18,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          SizedBox(height: 24),
-          
-          // Summary
-          _buildSection(
-            'Summary',
-            Icons.auto_awesome,
-            _aiResult!.summary,
-          ),
-          
-          // Key Information
-          if (_aiResult!.keyInfo.isNotEmpty) ...[
-            SizedBox(height: 24),
-            _buildKeyInfoSection(),
-          ],
-          
-          // Tags
-          if (_aiResult!.tags.isNotEmpty) ...[
-            SizedBox(height: 24),
-            Text(
-              'Tags',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
+            height: 200,
+            color: Colors.grey[200],
+            child: Center(
+              child: Image.file(
+                File(widget.imagePath),
+                fit: BoxFit.contain,
               ),
             ),
-            SizedBox(height: 12),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: _aiResult!.tags.map((tag) => Chip(
-                label: Text(tag),
-                backgroundColor: Colors.blue.shade50,
-                avatar: Icon(Icons.tag, size: 16),
-              )).toList(),
-            ),
-          ],
+          ),
           
-          SizedBox(height: 24),
-          
-          // Confidence indicator
-          Container(
-            padding: EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.green.shade50,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.verified, color: Colors.green),
-                SizedBox(width: 8),
-                Text(
-                  'AI Confidence: ${(_aiResult!.confidence * 100).toStringAsFixed(0)}%',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    color: Colors.green.shade900,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSection(String title, IconData icon, String content) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Icon(icon, size: 20, color: Colors.blue),
-            SizedBox(width: 8),
-            Text(
-              title,
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
-        SizedBox(height: 12),
-        Container(
-          width: double.infinity,
-          padding: EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.blue.shade50,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Text(
-            content,
-            style: TextStyle(fontSize: 15, height: 1.5),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildKeyInfoSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Key Information',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        SizedBox(height: 12),
-        Container(
-          padding: EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.orange.shade50,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Colors.orange.shade200),
-          ),
-          child: Column(
-            children: _aiResult!.keyInfo.entries.map((entry) => Padding(
-              padding: EdgeInsets.symmetric(vertical: 6),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
+          // Content
+          Expanded(
+            child: DefaultTabController(
+              length: 3,
+              child: Column(
                 children: [
-                  SizedBox(
-                    width: 100,
-                    child: Text(
-                      '${entry.key}:',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.orange.shade900,
-                      ),
-                    ),
+                  TabBar(
+                    labelColor: Colors.blue,
+                    tabs: [
+                      Tab(text: 'Summary'),
+                      Tab(text: 'Ask AI'),
+                      Tab(text: 'Full Text'),
+                    ],
                   ),
                   Expanded(
-                    child: Text(
-                      entry.value,
-                      style: TextStyle(fontSize: 15),
+                    child: TabBarView(
+                      children: [
+                        _buildSummaryTab(),
+                        _buildAskAITab(),
+                        _buildFullTextTab(),
+                      ],
                     ),
                   ),
                 ],
               ),
-            )).toList(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSummaryTab() {
+    return SingleChildScrollView(
+      padding: EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.auto_awesome, color: Colors.purple),
+              SizedBox(width: 8),
+              Text(
+                'AI-Generated Summary',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 16),
+          if (_isLoadingSummary)
+            Center(
+              child: Column(
+                children: [
+                  CircularProgressIndicator(),
+                  SizedBox(height: 16),
+                  Text('Analyzing document with AI...'),
+                ],
+              ),
+            )
+          else
+            Container(
+              padding: EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.purple.shade50,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.purple.shade200),
+              ),
+              child: Text(
+                _summary.isEmpty ? 'No summary available.' : _summary,
+                style: TextStyle(fontSize: 15, height: 1.5),
+              ),
+            ),
+          SizedBox(height: 24),
+          Row(
+            children: [
+              Icon(Icons.description, color: Colors.blue),
+              SizedBox(width: 8),
+              Text(
+                'Document Info',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 12),
+          _buildInfoCard('Document Name', widget.documentName),
+          _buildInfoCard('Word Count', _extractedText.split(' ').where((w) => w.isNotEmpty).length.toString()),
+          _buildInfoCard('Character Count', _extractedText.length.toString()),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAskAITab() {
+    return Column(
+      children: [
+        // Chat history
+        Expanded(
+          child: _chatHistory.isEmpty
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.chat_bubble_outline, size: 80, color: Colors.grey),
+                      SizedBox(height: 16),
+                      Text(
+                        'Ask questions about this document',
+                        style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                      ),
+                      SizedBox(height: 8),
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 32),
+                        child: Text(
+                          'Try:\n• "What is this document about?"\n• "Summarize this document"\n• "What dates are mentioned?"',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(fontSize: 14, color: Colors.grey[500]),
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              : ListView.builder(
+                  controller: _scrollController,
+                  padding: EdgeInsets.only(
+                    left: 16,
+                    right: 16,
+                    top: 16,
+                    bottom: 16,
+                  ),
+                  itemCount: _chatHistory.length + (_isAskingQuestion ? 1 : 0),
+                  itemBuilder: (context, index) {
+                    if (index == _chatHistory.length && _isAskingQuestion) {
+                      return _buildTypingIndicator();
+                    }
+                    return _buildChatBubble(_chatHistory[index]);
+                  },
+                ),
+        ),
+        
+        // Question input with proper padding for navigation bar
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black12,
+                blurRadius: 4,
+                offset: Offset(0, -2),
+              ),
+            ],
+          ),
+          child: SafeArea(
+            top: false,
+            child: Padding(
+              padding: EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _questionController,
+                      decoration: InputDecoration(
+                        hintText: 'Ask a question...',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(24),
+                        ),
+                        contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                      ),
+                      maxLines: null,
+                      textInputAction: TextInputAction.send,
+                      onSubmitted: (_) => _askQuestion(),
+                      enabled: !_isAskingQuestion && _extractedText.isNotEmpty,
+                    ),
+                  ),
+                  SizedBox(width: 8),
+                  CircleAvatar(
+                    backgroundColor: Colors.blue,
+                    child: IconButton(
+                      icon: Icon(Icons.send, color: Colors.white, size: 20),
+                      onPressed: _isAskingQuestion || _extractedText.isEmpty ? null : _askQuestion,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildDetailsTab() {
-    final structuredData = _ocrService.extractStructuredData(_ocrResult!.text);
-    
+  Widget _buildChatBubble(ChatMessage message) {
+    return Align(
+      alignment: message.isUser ? Alignment.centerRight : Alignment.centerLeft,
+      child: Container(
+        margin: EdgeInsets.only(bottom: 12),
+        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
+        decoration: BoxDecoration(
+          color: message.isUser ? Colors.blue : Colors.grey[200],
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Text(
+          message.text,
+          style: TextStyle(
+            color: message.isUser ? Colors.white : Colors.black87,
+            fontSize: 15,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTypingIndicator() {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Container(
+        margin: EdgeInsets.only(bottom: 12),
+        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: Colors.grey[200],
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+            SizedBox(width: 12),
+            Text('AI is thinking...'),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFullTextTab() {
     return SingleChildScrollView(
       padding: EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildDetailCard(
-            'Document Info',
-            Icons.info_outline,
-            [
-              'Name: ${widget.documentName}',
-              'Language: ${_ocrResult!.language}',
-              'Words: ${_ocrResult!.text.split(' ').length}',
-              'Lines: ${_ocrResult!.text.split('\n').length}',
-              'Characters: ${_ocrResult!.text.length}',
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Extracted Text',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              IconButton(
+                icon: Icon(Icons.copy),
+                onPressed: _extractedText.isEmpty ? null : () {
+                  Clipboard.setData(ClipboardData(text: _extractedText));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Text copied to clipboard')),
+                  );
+                },
+                tooltip: 'Copy Text',
+              ),
             ],
           ),
-          
-          if (structuredData['emails']!.isNotEmpty) ...[
-            SizedBox(height: 16),
-            _buildDetailCard(
-              'Email Addresses',
-              Icons.email,
-              structuredData['emails']!,
+          SizedBox(height: 16),
+          if (_isLoadingOCR)
+            Center(
+              child: Column(
+                children: [
+                  CircularProgressIndicator(),
+                  SizedBox(height: 16),
+                  Text('Extracting text from document...'),
+                ],
+              ),
+            )
+          else
+            SelectableText(
+              _extractedText.isEmpty ? 'No text extracted from document.' : _extractedText,
+              style: TextStyle(fontSize: 15, height: 1.6),
             ),
-          ],
-          
-          if (structuredData['phones']!.isNotEmpty) ...[
-            SizedBox(height: 16),
-            _buildDetailCard(
-              'Phone Numbers',
-              Icons.phone,
-              structuredData['phones']!,
-            ),
-          ],
-          
-          if (structuredData['amounts']!.isNotEmpty) ...[
-            SizedBox(height: 16),
-            _buildDetailCard(
-              'Amounts',
-              Icons.attach_money,
-              structuredData['amounts']!,
-            ),
-          ],
-          
-          if (structuredData['dates']!.isNotEmpty) ...[
-            SizedBox(height: 16),
-            _buildDetailCard(
-              'Dates',
-              Icons.calendar_today,
-              structuredData['dates']!,
-            ),
-          ],
-          
-          if (structuredData['urls']!.isNotEmpty) ...[
-            SizedBox(height: 16),
-            _buildDetailCard(
-              'URLs',
-              Icons.link,
-              structuredData['urls']!,
-            ),
-          ],
         ],
       ),
     );
   }
 
-  Widget _buildDetailCard(String title, IconData icon, List<String> items) {
-    return Card(
-      child: Padding(
-        padding: EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(icon, size: 20, color: Colors.blue),
-                SizedBox(width: 8),
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: 12),
-            ...items.map((item) => Padding(
-              padding: EdgeInsets.symmetric(vertical: 4),
-              child: Text('• $item'),
-            )),
-          ],
-        ),
+  Widget _buildInfoCard(String label, String value) {
+    return Container(
+      margin: EdgeInsets.only(bottom: 8),
+      padding: EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.blue.shade50,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.blue.shade200),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: TextStyle(fontWeight: FontWeight.w500),
+          ),
+          Text(
+            value,
+            style: TextStyle(color: Colors.blue.shade900),
+          ),
+        ],
       ),
     );
   }
+}
 
-  Widget _buildPremiumUpsell() {
-    return Center(
-      child: Padding(
-        padding: EdgeInsets.all(24),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.auto_awesome,
-              size: 80,
-              color: Colors.amber,
-            ),
-            SizedBox(height: 24),
-            Text(
-              'AI-Powered Analysis',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            SizedBox(height: 16),
-            Text(
-              'Upgrade to Premium to unlock:\n\n'
-              '• Smart document categorization\n'
-              '• AI-generated summaries\n'
-              '• Automatic key info extraction\n'
-              '• Intelligent tagging\n'
-              '• Advanced search',
-              style: TextStyle(fontSize: 16, height: 1.8),
-              textAlign: TextAlign.center,
-            ),
-            SizedBox(height: 32),
-            ElevatedButton.icon(
-              onPressed: () => SubscriptionManager.showSubscriptionDialog(context),
-              icon: Icon(Icons.workspace_premium),
-              label: Text('Start 7-Day Free Trial'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue,
-                foregroundColor: Colors.white,
-                padding: EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                textStyle: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+class ChatMessage {
+  final String text;
+  final bool isUser;
+  final DateTime timestamp;
 
-  void _copyToClipboard(String text) {
-    Clipboard.setData(ClipboardData(text: text));
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('✓ Text copied to clipboard'),
-        backgroundColor: Colors.green,
-        duration: Duration(seconds: 2),
-      ),
-    );
-  }
-
-  Future<void> _saveText() async {
-    final saved = await _ocrService.saveTextToFile(
-      _ocrResult!.text,
-      widget.documentName,
-    );
-    
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(saved ? '✓ Text saved as TXT file' : '✗ Failed to save'),
-          backgroundColor: saved ? Colors.green : Colors.red,
-        ),
-      );
-    }
-  }
-
-  void _shareText() {
-    // TODO: Implement share functionality
-    // This would use the share_plus package
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Share feature coming soon!')),
-    );
-  }
+  ChatMessage({
+    required this.text,
+    required this.isUser,
+    required this.timestamp,
+  });
 }

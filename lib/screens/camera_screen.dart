@@ -5,6 +5,7 @@ import 'dart:io';
 import '../subscription_manager.dart';
 import 'corner_adjustment_screen.dart';
 import 'enhancement_screen.dart';
+import 'settings_screen.dart';
 
 class CameraScreen extends StatefulWidget {
   const CameraScreen({Key? key}) : super(key: key);
@@ -66,8 +67,6 @@ class _CameraScreenState extends State<CameraScreen> {
               ),
             ),
             SizedBox(height: 32),
-            
-            // Main scan button
             ElevatedButton.icon(
               onPressed: _isScanning ? null : _scanDocument,
               icon: Icon(Icons.camera_alt, size: 28),
@@ -82,8 +81,6 @@ class _CameraScreenState extends State<CameraScreen> {
                 ),
               ),
             ),
-            
-            // Premium badge if showing "Add Another Page" for free users
             if (_scannedImages.isNotEmpty && !isPremium) ...[
               SizedBox(height: 8),
               Container(
@@ -110,7 +107,6 @@ class _CameraScreenState extends State<CameraScreen> {
                 ),
               ),
             ],
-            
             if (_scannedImages.isNotEmpty) ...[
               SizedBox(height: 16),
               OutlinedButton.icon(
@@ -128,13 +124,11 @@ class _CameraScreenState extends State<CameraScreen> {
   Future<void> _scanDocument() async {
     final isPremium = _subscriptionManager.isPremium;
     
-    // Check if free user is trying to add a second page
     if (!isPremium && _scannedImages.isNotEmpty) {
       _showMultiPageUpgradeDialog();
       return;
     }
     
-    // Check if user can scan BEFORE scanning
     final canScan = await _subscriptionManager.canScanToday();
     
     if (!canScan) {
@@ -147,21 +141,25 @@ class _CameraScreenState extends State<CameraScreen> {
     setState(() => _isScanning = true);
 
     try {
-      // Use document scanner package
       List<String>? pictures = await CunningDocumentScanner.getPictures(
-        noOfPages: 1,
+        noOfPages: isPremium ? 50 : 1,
       );
 
       if (pictures != null && pictures.isNotEmpty) {
-        // Increment scan count for THIS PAGE
+        if (!isPremium && pictures.length > 1) {
+          if (mounted) {
+            _showMultiPageBlockedDialog();
+          }
+          pictures = [pictures.first];
+        }
+        
         await _subscriptionManager.incrementScanCount();
         
         setState(() {
-          _scannedImages.addAll(pictures);
+          _scannedImages.addAll(pictures!);
         });
 
         if (mounted) {
-          // Get remaining scans to show user
           final remaining = await _subscriptionManager.getRemainingScans();
           
           ScaffoldMessenger.of(context).showSnackBar(
@@ -193,7 +191,6 @@ class _CameraScreenState extends State<CameraScreen> {
   void _finishScanning() {
     if (_scannedImages.isEmpty) return;
 
-    // Navigate to enhancement screen
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
@@ -203,6 +200,84 @@ class _CameraScreenState extends State<CameraScreen> {
               ? _scannedImages.sublist(1) 
               : null,
         ),
+      ),
+    );
+  }
+
+  void _showMultiPageBlockedDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(Icons.workspace_premium, color: Colors.amber),
+            SizedBox(width: 8),
+            Text('Multi-Page Detected'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'You scanned multiple pages, but only the first page will be saved.',
+              style: TextStyle(fontSize: 15),
+            ),
+            SizedBox(height: 16),
+            Container(
+              padding: EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.amber.shade50,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.amber),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.workspace_premium, color: Colors.amber.shade700),
+                      SizedBox(width: 8),
+                      Text(
+                        'Upgrade to Premium',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 8),
+                  Text('Unlock multi-page scanning:'),
+                  SizedBox(height: 4),
+                  _buildFeature('📄 Scan unlimited pages per document'),
+                  _buildFeature('♾️ Unlimited daily scans'),
+                  _buildFeature('🚫 No watermarks'),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Continue'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => SettingsScreen()),
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.amber,
+              foregroundColor: Colors.black,
+            ),
+            child: Text('Upgrade Now'),
+          ),
+        ],
       ),
     );
   }
@@ -303,9 +378,7 @@ class _CameraScreenState extends State<CameraScreen> {
       builder: (context) => AlertDialog(
         title: Text('Daily Limit Reached'),
         content: Text(
-          'You\'ve used all 5 free scans for today.\n\n'
-          'Upgrade to Premium for unlimited scans and AI features!\n\n'
-          '🎉 Start your 7-day FREE trial now!',
+          'You have used all 5 free scans for today. Upgrade to Premium for unlimited scans and AI features! Start your 7-day FREE trial now!',
         ),
         actions: [
           TextButton(
