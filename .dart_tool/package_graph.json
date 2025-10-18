@@ -16,6 +16,7 @@
         "image",
         "image_picker",
         "in_app_purchase",
+        "in_app_review",
         "open_file",
         "package_info_plus",
         "path_provider",
@@ -1093,6 +1094,24 @@
       "name": "sprintf",
       "version": "7.0.0",
       "dependencies": []
+    },
+    {
+      "name": "in_app_review",
+      "version": "2.0.11",
+      "dependencies": [
+        "flutter",
+        "in_app_review_platform_interface"
+      ]
+    },
+    {
+      "name": "in_app_review_platform_interface",
+      "version": "2.0.5",
+      "dependencies": [
+        "flutter",
+        "platform",
+        "plugin_platform_interface",
+        "url_launcher"
+      ]
     }
   ],
   "configVersion": 1

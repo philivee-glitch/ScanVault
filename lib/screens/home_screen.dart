@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:in_app_review/in_app_review.dart';
 import '../subscription_manager.dart';
 import '../permissions_manager.dart';
 import 'camera_screen.dart';
@@ -15,6 +17,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final SubscriptionManager _subscriptionManager = SubscriptionManager();
+  final InAppReview _inAppReview = InAppReview.instance;
   int _remainingScans = 5;
   bool _isPremium = false;
 
@@ -32,6 +35,35 @@ class _HomeScreenState extends State<HomeScreen> {
       _remainingScans = remaining;
       _isPremium = premium;
     });
+  }
+
+  Future<void> _checkAndRequestReview() async {
+    final prefs = await SharedPreferences.getInstance();
+    
+    // Get total scans completed
+    final totalScans = prefs.getInt('total_scans_completed') ?? 0;
+    final reviewRequested = prefs.getBool('review_requested') ?? false;
+    
+    // Increment total scans
+    final newTotal = totalScans + 1;
+    await prefs.setInt('total_scans_completed', newTotal);
+    
+    // Show review after 5 scans, only once
+    if (newTotal == 5 && !reviewRequested) {
+      await _requestReview();
+      await prefs.setBool('review_requested', true);
+    }
+  }
+
+  Future<void> _requestReview() async {
+    try {
+      if (await _inAppReview.isAvailable()) {
+        _inAppReview.requestReview();
+      }
+    } catch (e) {
+      debugPrint('Error requesting review: $e');
+      // Fail silently - don't disrupt user experience
+    }
   }
 
   @override
@@ -238,9 +270,12 @@ class _HomeScreenState extends State<HomeScreen> {
       Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => CameraScreen()),
-      ).then((_) {
+      ).then((_) async {
         // Reload status when returning from camera
-        _loadUserStatus();
+        await _loadUserStatus();
+        
+        // Check if we should request a review
+        await _checkAndRequestReview();
       });
     }
   }

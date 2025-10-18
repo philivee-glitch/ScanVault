@@ -290,6 +290,18 @@
       "languageVersion": "3.9"
     },
     {
+      "name": "in_app_review",
+      "rootUri": "file:///C:/Users/phili/AppData/Local/Pub/Cache/hosted/pub.dev/in_app_review-2.0.11",
+      "packageUri": "lib/",
+      "languageVersion": "2.12"
+    },
+    {
+      "name": "in_app_review_platform_interface",
+      "rootUri": "file:///C:/Users/phili/AppData/Local/Pub/Cache/hosted/pub.dev/in_app_review_platform_interface-2.0.5",
+      "packageUri": "lib/",
+      "languageVersion": "2.12"
+    },
+    {
       "name": "json_annotation",
       "rootUri": "file:///C:/Users/phili/AppData/Local/Pub/Cache/hosted/pub.dev/json_annotation-4.9.0",
       "packageUri": "lib/",
