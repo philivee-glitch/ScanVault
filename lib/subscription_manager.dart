@@ -373,7 +373,8 @@ class _SubscriptionDialogState extends State<_SubscriptionDialog> {
               SizedBox(height: 12),
               
               // Pricing - Now clickable!
-              GestureDetector(
+              // Pricing - Now clickable!
+              InkWell(
                 onTap: () {
                   setState(() {
                     _isYearly = false;
@@ -388,7 +389,7 @@ class _SubscriptionDialogState extends State<_SubscriptionDialog> {
                 ),
               ),
               SizedBox(height: 8),
-              GestureDetector(
+              InkWell(
                 onTap: () {
                   setState(() {
                     _isYearly = true;

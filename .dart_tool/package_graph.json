@@ -5,7 +5,7 @@
   "packages": [
     {
       "name": "scanvault_premium",
-      "version": "1.2.1+4",
+      "version": "1.2.2+7",
       "dependencies": [
         "camera",
         "cunning_document_scanner",
