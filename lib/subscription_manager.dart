@@ -13,7 +13,7 @@ class SubscriptionManager {
   static const String yearlySavings = '40%';
   
   // Trial configuration
-  static const int trialDays = 7;
+  static const int trialDays = 3;
   
   static final SubscriptionManager _instance = SubscriptionManager._internal();
   factory SubscriptionManager() => _instance;

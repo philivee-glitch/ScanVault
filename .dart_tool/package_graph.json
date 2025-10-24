@@ -5,7 +5,7 @@
   "packages": [
     {
       "name": "scanvault_premium",
-      "version": "1.2.2+7",
+      "version": "1.2.3+8",
       "dependencies": [
         "camera",
         "cunning_document_scanner",
@@ -83,6 +83,14 @@
         "permission_handler_html",
         "permission_handler_platform_interface",
         "permission_handler_windows"
+      ]
+    },
+    {
+      "name": "in_app_review",
+      "version": "2.0.11",
+      "dependencies": [
+        "flutter",
+        "in_app_review_platform_interface"
       ]
     },
     {
@@ -433,6 +441,16 @@
       "dependencies": [
         "flutter",
         "permission_handler_platform_interface"
+      ]
+    },
+    {
+      "name": "in_app_review_platform_interface",
+      "version": "2.0.5",
+      "dependencies": [
+        "flutter",
+        "platform",
+        "plugin_platform_interface",
+        "url_launcher"
       ]
     },
     {
@@ -978,6 +996,11 @@
       ]
     },
     {
+      "name": "platform",
+      "version": "3.1.6",
+      "dependencies": []
+    },
+    {
       "name": "json_annotation",
       "version": "4.9.0",
       "dependencies": [
@@ -993,11 +1016,6 @@
         "meta",
         "sprintf"
       ]
-    },
-    {
-      "name": "platform",
-      "version": "3.1.6",
-      "dependencies": []
     },
     {
       "name": "xdg_directories",
@@ -1094,24 +1112,6 @@
       "name": "sprintf",
       "version": "7.0.0",
       "dependencies": []
-    },
-    {
-      "name": "in_app_review",
-      "version": "2.0.11",
-      "dependencies": [
-        "flutter",
-        "in_app_review_platform_interface"
-      ]
-    },
-    {
-      "name": "in_app_review_platform_interface",
-      "version": "2.0.5",
-      "dependencies": [
-        "flutter",
-        "platform",
-        "plugin_platform_interface",
-        "url_launcher"
-      ]
     }
   ],
   "configVersion": 1
