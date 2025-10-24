@@ -1,0 +1,54 @@
+﻿  Future<String> _processImage(
+    String imagePath,
+    String filter,
+    double contrast,
+    double saturation,
+    int rotation,
+  ) async {
+    final bytes = await File(imagePath).readAsBytes();
+    img.Image? image = img.decodeImage(bytes);
+    if (image == null) throw Exception('Failed to decode image');
+    
+    // Apply rotation first (fast operation)
+    if (rotation != 0) {
+      image = img.copyRotate(image, angle: rotation.toDouble());
+    }
+    
+    // Apply filter (fixed for grayscale and B&W)
+    switch (filter) {
+      case 'B&W':
+        // Convert to grayscale first
+        image = img.grayscale(image);
+        // Apply threshold for pure black and white
+        for (int y = 0; y < image.height; y++) {
+          for (int x = 0; x < image.width; x++) {
+            final pixel = image.getPixel(x, y);
+            final luminance = img.getLuminance(pixel);
+            final newColor = luminance > 128 ? img.ColorRgb8(255, 255, 255) : img.ColorRgb8(0, 0, 0);
+            image.setPixel(x, y, newColor);
+          }
+        }
+        break;
+      case 'Grayscale':
+        image = img.grayscale(image);
+        break;
+      case 'Sharp':
+        image = img.convolution(image, [0, -1, 0, -1, 5, -1, 0, -1, 0]);
+        break;
+    }
+    
+    // Apply adjustments only if different from defaults
+    if (contrast != 1.0 || saturation != 1.0) {
+      image = img.adjustColor(
+        image,
+        contrast: contrast,
+        saturation: saturation,
+      );
+    }
+    
+    // Save with good quality but fast encoding
+    final tempDir = await getTemporaryDirectory();
+    final processedFile = File('${tempDir.path}/processed_${DateTime.now().millisecondsSinceEpoch}.jpg');
+    await processedFile.writeAsBytes(img.encodeJpg(image, quality: 90));
+    return processedFile.path;
+  }

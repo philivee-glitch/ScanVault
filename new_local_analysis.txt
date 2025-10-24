@@ -1,0 +1,229 @@
+﻿  AIAnalysisResult _localAnalysis(String text) {
+    // Enhanced local analysis without API
+    final lowercaseText = text.toLowerCase();
+    final words = text.split(RegExp(r'\s+'));
+    
+    // Document type detection with better patterns
+    DocumentCategory category = categories['other']!;
+    List<String> tags = [];
+    Map<String, String> keyInfo = {};
+    double confidence = 0.6;
+    
+    // Invoice detection
+    if (lowercaseText.contains('invoice') || 
+        lowercaseText.contains('bill to') ||
+        lowercaseText.contains('invoice no') ||
+        lowercaseText.contains('invoice #') ||
+        (lowercaseText.contains('total') && lowercaseText.contains('due'))) {
+      category = categories['invoice']!;
+      tags.addAll(['financial', 'payment', 'business']);
+      confidence = 0.85;
+      
+      // Extract invoice number
+      final invoicePattern = RegExp(r'invoice\s*(?:no|#|number)?[\s:]*([A-Z0-9-]+)', caseSensitive: false);
+      final invoiceMatch = invoicePattern.firstMatch(text);
+      if (invoiceMatch != null) {
+        keyInfo['Invoice Number'] = invoiceMatch.group(1)!;
+      }
+      
+      // Extract total amount
+      final totalPattern = RegExp(r'total[\s:]*\$?\s*([0-9,]+\.?[0-9]*)', caseSensitive: false);
+      final totalMatch = totalPattern.firstMatch(text);
+      if (totalMatch != null) {
+        keyInfo['Total Amount'] = '\$${totalMatch.group(1)}';
+      }
+      
+      // Extract due date
+      final duePattern = RegExp(r'due\s*date?[\s:]*([0-9]{1,2}[/-][0-9]{1,2}[/-][0-9]{2,4})', caseSensitive: false);
+      final dueMatch = duePattern.firstMatch(text);
+      if (dueMatch != null) {
+        keyInfo['Due Date'] = dueMatch.group(1)!;
+      }
+    }
+    
+    // Receipt detection
+    else if (lowercaseText.contains('receipt') || 
+             lowercaseText.contains('thank you for your purchase') ||
+             (lowercaseText.contains('paid') && lowercaseText.contains('change')) ||
+             lowercaseText.contains('transaction')) {
+      category = categories['receipt']!;
+      tags.addAll(['purchase', 'payment', 'transaction']);
+      confidence = 0.80;
+      
+      // Extract date
+      final datePattern = RegExp(r'([0-9]{1,2}[/-][0-9]{1,2}[/-][0-9]{2,4})');
+      final dateMatch = datePattern.firstMatch(text);
+      if (dateMatch != null) {
+        keyInfo['Date'] = dateMatch.group(1)!;
+      }
+      
+      // Extract total
+      final totalPattern = RegExp(r'total[\s:]*\$?\s*([0-9,]+\.?[0-9]*)', caseSensitive: false);
+      final totalMatch = totalPattern.firstMatch(text);
+      if (totalMatch != null) {
+        keyInfo['Total'] = '\$${totalMatch.group(1)}';
+      }
+      
+      // Extract merchant
+      if (words.length > 3) {
+        keyInfo['Merchant'] = words.take(3).join(' ');
+      }
+    }
+    
+    // Contract detection
+    else if (lowercaseText.contains('agreement') || 
+             lowercaseText.contains('contract') ||
+             lowercaseText.contains('terms and conditions') ||
+             (lowercaseText.contains('party') && lowercaseText.contains('hereby'))) {
+      category = categories['contract']!;
+      tags.addAll(['legal', 'agreement', 'binding']);
+      confidence = 0.75;
+      
+      // Extract parties
+      final partyPattern = RegExp(r'between\s+([A-Za-z\s]+)\s+and\s+([A-Za-z\s]+)', caseSensitive: false);
+      final partyMatch = partyPattern.firstMatch(text);
+      if (partyMatch != null) {
+        keyInfo['Party 1'] = partyMatch.group(1)!.trim();
+        keyInfo['Party 2'] = partyMatch.group(2)!.trim();
+      }
+      
+      // Extract effective date
+      final effectivePattern = RegExp(r'effective\s*date?[\s:]*([0-9]{1,2}[/-][0-9]{1,2}[/-][0-9]{2,4})', caseSensitive: false);
+      final effectiveMatch = effectivePattern.firstMatch(text);
+      if (effectiveMatch != null) {
+        keyInfo['Effective Date'] = effectiveMatch.group(1)!;
+      }
+    }
+    
+    // ID Document detection
+    else if (lowercaseText.contains('passport') || 
+             lowercaseText.contains('driver') ||
+             lowercaseText.contains('license') ||
+             lowercaseText.contains('identification') ||
+             lowercaseText.contains('birth certificate')) {
+      category = categories['id_document']!;
+      tags.addAll(['identity', 'personal', 'official']);
+      confidence = 0.90;
+      
+      // Extract ID number
+      final idPattern = RegExp(r'(?:no|number|#)[\s:]*([A-Z0-9-]+)', caseSensitive: false);
+      final idMatch = idPattern.firstMatch(text);
+      if (idMatch != null) {
+        keyInfo['ID Number'] = idMatch.group(1)!;
+      }
+      
+      // Extract expiry
+      final expiryPattern = RegExp(r'expir(?:y|es|ation)?[\s:]*([0-9]{1,2}[/-][0-9]{1,2}[/-][0-9]{2,4})', caseSensitive: false);
+      final expiryMatch = expiryPattern.firstMatch(text);
+      if (expiryMatch != null) {
+        keyInfo['Expiry Date'] = expiryMatch.group(1)!;
+      }
+    }
+    
+    // Letter detection
+    else if (lowercaseText.contains('dear') || 
+             lowercaseText.contains('sincerely') ||
+             lowercaseText.contains('regards') ||
+             (lowercaseText.contains('to whom it may concern'))) {
+      category = categories['letter']!;
+      tags.addAll(['correspondence', 'communication']);
+      confidence = 0.75;
+      
+      // Extract recipient
+      final dearPattern = RegExp(r'dear\s+([A-Za-z\s\.]+)', caseSensitive: false);
+      final dearMatch = dearPattern.firstMatch(text);
+      if (dearMatch != null) {
+        keyInfo['Recipient'] = dearMatch.group(1)!.trim();
+      }
+    }
+    
+    // Form detection
+    else if (lowercaseText.contains('application') || 
+             lowercaseText.contains('form') ||
+             lowercaseText.contains('please fill') ||
+             (lowercaseText.contains('name:') && lowercaseText.contains('date:'))) {
+      category = categories['form']!;
+      tags.addAll(['application', 'submission']);
+      confidence = 0.70;
+    }
+    
+    // Report detection
+    else if (lowercaseText.contains('report') || 
+             lowercaseText.contains('analysis') ||
+             lowercaseText.contains('summary') ||
+             lowercaseText.contains('findings')) {
+      category = categories['report']!;
+      tags.addAll(['document', 'information', 'analysis']);
+      confidence = 0.70;
+    }
+    
+    // Add smart tags based on content
+    if (lowercaseText.contains('urgent') || lowercaseText.contains('asap')) {
+      tags.add('urgent');
+    }
+    if (lowercaseText.contains('confidential') || lowercaseText.contains('private')) {
+      tags.add('confidential');
+    }
+    if (lowercaseText.contains('tax') || lowercaseText.contains('irs')) {
+      tags.add('tax');
+    }
+    if (lowercaseText.contains('medical') || lowercaseText.contains('patient')) {
+      tags.add('medical');
+    }
+    if (lowercaseText.contains('insurance')) {
+      tags.add('insurance');
+    }
+    
+    // Generate smart summary
+    String summary = _generateSmartSummary(text, category, keyInfo);
+    
+    return AIAnalysisResult(
+      summary: summary,
+      category: category,
+      keyInfo: keyInfo,
+      tags: tags.toSet().toList(), // Remove duplicates
+      confidence: confidence,
+    );
+  }
+  
+  String _generateSmartSummary(String text, DocumentCategory category, Map<String, String> keyInfo) {
+    final words = text.split(RegExp(r'\s+'));
+    final wordCount = words.length;
+    
+    String summary = 'This is a ${category.name.toLowerCase()}';
+    
+    if (keyInfo.isNotEmpty) {
+      summary += ' containing: ${keyInfo.keys.join(', ')}';
+    }
+    
+    summary += '. Document has approximately $wordCount words.';
+    
+    // Add specific insights based on category
+    switch (category.name) {
+      case 'Invoice':
+        if (keyInfo.containsKey('Total Amount')) {
+          summary += ' Total amount: ${keyInfo['Total Amount']}.';
+        }
+        if (keyInfo.containsKey('Due Date')) {
+          summary += ' Payment due: ${keyInfo['Due Date']}.';
+        }
+        break;
+      case 'Receipt':
+        if (keyInfo.containsKey('Total')) {
+          summary += ' Purchase amount: ${keyInfo['Total']}.';
+        }
+        break;
+      case 'Contract':
+        if (keyInfo.containsKey('Party 1') && keyInfo.containsKey('Party 2')) {
+          summary += ' Agreement between parties.';
+        }
+        break;
+      case 'ID Document':
+        if (keyInfo.containsKey('Expiry Date')) {
+          summary += ' Valid until: ${keyInfo['Expiry Date']}.';
+        }
+        break;
+    }
+    
+    return summary;
+  }

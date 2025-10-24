@@ -4,6 +4,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:open_file/open_file.dart';
 import 'package:share_plus/share_plus.dart';
 import 'pdf_preview_screen.dart';
+import 'document_analysis_screen.dart';
 
 class Document {
   final String name;
@@ -357,10 +358,23 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
                           ),
                           PopupMenuItem(
                             child: ListTile(
+                              leading: Icon(Icons.smart_toy, size: 20, color: Colors.blue),
+                              title: Text('AI Analysis'),
+                              contentPadding: EdgeInsets.zero,
+                            ),
+                            onTap: () {
+                              Future.delayed(Duration(milliseconds: 100), () {
+                                _showAIAnalysisOption(doc);
+                              });
+                            },
+                          ),
+                          PopupMenuItem(
+                            child: ListTile(
                               leading: Icon(Icons.edit, size: 20),
                               title: Text('Rename'),
                               contentPadding: EdgeInsets.zero,
                             ),
+
                             onTap: () {
                               Future.delayed(Duration(milliseconds: 100), () {
                                 _showRenameDocumentDialog(doc);
@@ -863,6 +877,43 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
     }
   }
 
+
+  void _showAIAnalysisOption(Document doc) {
+    // For PDF documents, we need to extract the first page as an image
+    // Since we don't have the original image, show a dialog explaining this
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(Icons.smart_toy, color: Colors.blue),
+            SizedBox(width: 8),
+            Text('AI Analysis'),
+          ],
+        ),
+        content: Text(
+          'AI Analysis works best with the original scanned image.\n\n'
+          'To analyze this document:\n'
+          '1. Scan a new document\n'
+          '2. Select "AI Analysis" from the preview screen\n\n'
+          'Would you like to scan a new document now?'
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              Navigator.pop(context); // Go back to scan
+            },
+            child: Text('Scan New Document'),
+          ),
+        ],
+      ),
+    );
+  }
   String _formatDate(DateTime date) {
     final now = DateTime.now();
     final diff = now.difference(date);

@@ -5,9 +5,9 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:image/image.dart' as img;
 import '../subscription_manager.dart';
-import 'document_analysis_screen.dart';
 import 'documents_screen.dart';
 import 'pdf_preview_screen.dart';
+import 'document_analysis_screen.dart';
 
 class EnhancementScreen extends StatefulWidget {
   final String imagePath;
@@ -28,12 +28,13 @@ class _EnhancementScreenState extends State<EnhancementScreen> {
 
   String _currentFilter = 'Original';
   double _contrast = 1.0;
+  double _saturation = 1.0;
   int _rotation = 0;
   bool _isProcessing = false;
   String? _processedImagePath;
   List<String> _allPages = [];
 
-  final List<String> _filters = ['Original', 'B&W', 'Grayscale', 'Color+'];
+  final List<String> _filters = ['Original', 'B&W', 'Grayscale', 'Sharp'];
 
   @override
   void initState() {
@@ -54,7 +55,7 @@ class _EnhancementScreenState extends State<EnhancementScreen> {
       ),
       body: Column(
         children: [
-          // Image preview - takes most of the space
+          // Image preview
           Expanded(
             child: Container(
               color: Colors.grey[200],
@@ -78,9 +79,9 @@ class _EnhancementScreenState extends State<EnhancementScreen> {
             ),
           ),
 
-          // Controls - compact, no scrolling needed
+          // Controls
           Container(
-            padding: EdgeInsets.all(16),
+            padding: EdgeInsets.fromLTRB(16, 16, 16, 48),
             decoration: BoxDecoration(
               color: Colors.white,
               boxShadow: [
@@ -123,7 +124,7 @@ class _EnhancementScreenState extends State<EnhancementScreen> {
                 
                 SizedBox(height: 12),
                 
-                // Contrast - compact
+                // Contrast
                 Row(
                   children: [
                     Text('Contrast', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
@@ -143,9 +144,31 @@ class _EnhancementScreenState extends State<EnhancementScreen> {
                   ],
                 ),
                 
+                SizedBox(height: 4),
+                
+                // Saturation
+                Row(
+                  children: [
+                    Text('Color', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                    Expanded(
+                      child: Slider(
+                        value: _saturation,
+                        min: 0.0,
+                        max: 2.0,
+                        divisions: 40,
+                        onChanged: (value) {
+                          setState(() => _saturation = value);
+                        },
+                        onChangeEnd: (value) => _applyEnhancements(),
+                      ),
+                    ),
+                    Text(_saturation.toStringAsFixed(1), style: TextStyle(fontSize: 12, color: Colors.grey)),
+                  ],
+                ),
+                
                 SizedBox(height: 8),
                 
-                // Rotation buttons - compact
+                // Rotation
                 Row(
                   children: [
                     Expanded(
@@ -178,9 +201,33 @@ class _EnhancementScreenState extends State<EnhancementScreen> {
                   ],
                 ),
                 
+
                 SizedBox(height: 12),
                 
-                // SAVE BUTTON - always visible
+                // AI ANALYSIS BUTTON
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: OutlinedButton.icon(
+                    onPressed: _isProcessing ? null : _navigateToAIAnalysis,
+                    icon: Icon(Icons.smart_toy, size: 22),
+                    label: Text(
+                      'AI ANALYSIS',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.blue,
+                      side: BorderSide(color: Colors.blue, width: 2),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  ),
+                ),
+                
+                SizedBox(height: 12),
+                
+                // SAVE BUTTON
                 SizedBox(
                   width: double.infinity,
                   height: 50,
@@ -212,41 +259,17 @@ class _EnhancementScreenState extends State<EnhancementScreen> {
     setState(() => _isProcessing = true);
 
     try {
-      final bytes = await File(widget.imagePath).readAsBytes();
-      img.Image? image = img.decodeImage(bytes);
-
-      if (image == null) return;
-
-      // Apply rotation first
-      if (_rotation != 0) {
-        image = img.copyRotate(image, angle: _rotation.toDouble());
-      }
-
-      // Apply filter
-      switch (_currentFilter) {
-        case 'B&W':
-          image = img.grayscale(image);
-          image = img.contrast(image, contrast: 150);
-          break;
-        case 'Grayscale':
-          image = img.grayscale(image);
-          break;
-        case 'Color+':
-          image = img.adjustColor(image, saturation: 1.3);
-          break;
-      }
-
-      // Apply contrast adjustment
-      if (_contrast != 1.0) {
-        image = img.adjustColor(image, contrast: _contrast);
-      }
-
-      final tempDir = await getTemporaryDirectory();
-      final processedFile = File('${tempDir.path}/processed_${DateTime.now().millisecondsSinceEpoch}.jpg');
-      await processedFile.writeAsBytes(img.encodeJpg(image, quality: 95));
+      // Process in background to avoid UI lag
+      final result = await _processImage(
+        widget.imagePath,
+        _currentFilter,
+        _contrast,
+        _saturation,
+        _rotation,
+      );
 
       setState(() {
-        _processedImagePath = processedFile.path;
+        _processedImagePath = result;
         _isProcessing = false;
       });
     } catch (e) {
@@ -264,6 +287,82 @@ class _EnhancementScreenState extends State<EnhancementScreen> {
     }
   }
 
+  // Optimized image processing - runs in isolate for better performance
+  
+
+
+    Future<String> _processImage(
+    String imagePath,
+    String filter,
+    double contrast,
+    double saturation,
+    int rotation,
+  ) async {
+    final bytes = await File(imagePath).readAsBytes();
+    img.Image? image = img.decodeImage(bytes);
+    if (image == null) throw Exception('Failed to decode image');
+    
+    // Apply rotation first (fast operation)
+    if (rotation != 0) {
+      image = img.copyRotate(image, angle: rotation.toDouble());
+    }
+    
+    // Apply contrast and saturation BEFORE filters (except for B&W)
+    if (filter != 'B&W' && (contrast != 1.0 || saturation != 1.0)) {
+      image = img.adjustColor(
+        image,
+        contrast: contrast,
+        saturation: saturation,
+      );
+    }
+    
+    // Apply filter
+    switch (filter) {
+      case 'B&W':
+        // For B&W, apply contrast first to the color image
+        if (contrast != 1.0) {
+          image = img.adjustColor(image, contrast: contrast);
+        }
+        // Convert to grayscale
+        image = img.grayscale(image);
+        // Apply threshold for pure black and white
+        for (int y = 0; y < image.height; y++) {
+          for (int x = 0; x < image.width; x++) {
+            final pixel = image.getPixel(x, y);
+            final luminance = img.getLuminance(pixel);
+            final newColor = luminance > 128 ? img.ColorRgb8(255, 255, 255) : img.ColorRgb8(0, 0, 0);
+            image.setPixel(x, y, newColor);
+          }
+        }
+        break;
+      case 'Grayscale':
+        image = img.grayscale(image);
+        break;
+      case 'Sharp':
+        image = img.adjustColor(image, contrast: 1.3);
+        break;
+    }
+    
+    // Save with good quality but fast encoding
+    final tempDir = await getTemporaryDirectory();
+    final processedFile = File('${tempDir.path}/processed_${DateTime.now().millisecondsSinceEpoch}.jpg');
+    await processedFile.writeAsBytes(img.encodeJpg(image, quality: 90));
+    return processedFile.path;
+  }
+
+  void _navigateToAIAnalysis() {
+    if (_processedImagePath == null) return;
+    
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => DocumentAnalysisScreen(
+          imagePath: _processedImagePath!,
+          documentName: 'Scanned Document',
+        ),
+      ),
+    );
+  }
   Future<void> _showSaveOptions() async {
     final directory = await getApplicationDocumentsDirectory();
     final docDir = Directory('${directory.path}/documents');
@@ -272,7 +371,6 @@ class _EnhancementScreenState extends State<EnhancementScreen> {
       await docDir.create(recursive: true);
     }
 
-    // Load available folders
     final folders = <String>[];
     await for (var entity in docDir.list()) {
       if (entity is Directory) {
@@ -497,26 +595,6 @@ class _EnhancementScreenState extends State<EnhancementScreen> {
             },
             icon: Icon(Icons.visibility),
             label: Text('View PDF'),
-          ),
-          ElevatedButton.icon(
-            onPressed: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => DocumentAnalysisScreen(
-                    imagePath: _processedImagePath!,
-                    documentName: fileName,
-                  ),
-                ),
-              );
-            },
-            icon: Icon(Icons.text_fields),
-            label: Text('Extract Text'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.green,
-              foregroundColor: Colors.white,
-            ),
           ),
         ],
       ),

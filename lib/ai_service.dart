@@ -1,4 +1,4 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -226,7 +226,7 @@ Respond in this JSON format:
     }
 
     // Try to find amounts
-    final amountPattern = RegExp(r'[\$€£]\s?\d+(?:,\d{3})*(?:\.\d{2})?');
+    final amountPattern = RegExp(r'[\$â‚¬Â£]\s?\d+(?:,\d{3})*(?:\.\d{2})?');
     final amountMatch = amountPattern.firstMatch(text);
     if (amountMatch != null) {
       keyInfo['amount'] = amountMatch.group(0)!;
@@ -290,21 +290,21 @@ Respond in this JSON format:
       final result = await analyzeDocument(text);
       if (result != null) {
         final buffer = StringBuffer();
-        buffer.writeln('📄 ${result.category.name}\n');
+        buffer.writeln('ðŸ“„ ${result.category.name}\n');
         buffer.writeln(result.summary);
         
         if (result.keyInfo.isNotEmpty) {
-          buffer.writeln('\n📋 Key Details:');
+          buffer.writeln('\nðŸ“‹ Key Details:');
           result.keyInfo.forEach((key, value) {
-            buffer.writeln('• ${key.toUpperCase()}: $value');
+            buffer.writeln('â€¢ ${key.toUpperCase()}: $value');
           });
         }
         
         if (result.tags.isNotEmpty) {
-          buffer.writeln('\n🏷️ Tags: ${result.tags.join(', ')}');
+          buffer.writeln('\nðŸ·ï¸ Tags: ${result.tags.join(', ')}');
         }
         
-        buffer.writeln('\n📊 Confidence: ${(result.confidence * 100).toStringAsFixed(0)}%');
+        buffer.writeln('\nðŸ“Š Confidence: ${(result.confidence * 100).toStringAsFixed(0)}%');
         
         return buffer.toString();
       }
@@ -358,7 +358,7 @@ Respond in this JSON format:
       }
       
       if (lowerQuestion.contains('amount') || lowerQuestion.contains('price') || lowerQuestion.contains('cost')) {
-        final amountPattern = RegExp(r'[\$€£]\s?\d+(?:,\d{3})*(?:\.\d{2})?');
+        final amountPattern = RegExp(r'[\$â‚¬Â£]\s?\d+(?:,\d{3})*(?:\.\d{2})?');
         final amounts = amountPattern.allMatches(documentText).map((m) => m.group(0)).toSet();
         if (amounts.isNotEmpty) {
           return 'Amounts mentioned: ${amounts.join(', ')}';
@@ -389,7 +389,7 @@ Respond in this JSON format:
         }
       }
       
-      return 'I couldn\'t find specific information about that. Try asking:\n\n• "What is this document about?"\n• "Summarize this document"\n• "What dates are mentioned?"\n• "What amounts are in this document?"';
+      return 'I couldn\'t find specific information about that. Try asking:\n\nâ€¢ "What is this document about?"\nâ€¢ "Summarize this document"\nâ€¢ "What dates are mentioned?"\nâ€¢ "What amounts are in this document?"';
     } catch (e) {
       debugPrint('Answer question error: $e');
       return 'Error processing your question. Please try rephrasing it.';
