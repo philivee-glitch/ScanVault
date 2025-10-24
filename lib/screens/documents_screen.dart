@@ -33,7 +33,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
   List<String> _folders = [];
   bool _isLoading = true;
   String? _selectedFolder;
-  
+
   // Multi-select mode
   bool _isSelectionMode = false;
   Set<String> _selectedDocuments = {};
@@ -65,7 +65,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
 
       // Load documents
       final documents = <Document>[];
-      
+
       if (_selectedFolder == null) {
         // Load documents from root
         await for (var entity in docDir.list()) {
@@ -128,7 +128,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
       } else {
         _selectedDocuments.add(path);
       }
-      
+
       // Exit selection mode if nothing selected
       if (_selectedDocuments.isEmpty) {
         _isSelectionMode = false;
@@ -153,7 +153,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(_isSelectionMode 
+        title: Text(_isSelectionMode
             ? '${_selectedDocuments.length} selected'
             : _selectedFolder ?? 'Documents'),
         leading: _isSelectionMode
@@ -269,185 +269,181 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
                 ),
               ),
             ),
-            ..._folders.map((folder) => _buildFolderCard(folder)),
-            if (_documents.isNotEmpty) ...[
-              SizedBox(height: 16),
-              Padding(
-                padding: EdgeInsets.all(8),
-                child: Text(
-                  'Recent Documents',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.grey[700],
-                  ),
+            ..._folders.map((folder) => Card(
+              child: ListTile(
+                leading: Icon(Icons.folder, color: Colors.orange, size: 32),
+                title: Text(folder, style: TextStyle(fontWeight: FontWeight.w500)),
+                trailing: PopupMenuButton(
+                  icon: Icon(Icons.more_vert),
+                  itemBuilder: (context) => [
+                    PopupMenuItem(
+                      child: ListTile(
+                        leading: Icon(Icons.edit, size: 20),
+                        title: Text('Rename'),
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                      onTap: () {
+                        Future.delayed(Duration(milliseconds: 100), () {
+                          _showRenameFolderDialog(folder);
+                        });
+                      },
+                    ),
+                    PopupMenuItem(
+                      child: ListTile(
+                        leading: Icon(Icons.delete, size: 20, color: Colors.red),
+                        title: Text('Delete', style: TextStyle(color: Colors.red)),
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                      onTap: () {
+                        Future.delayed(Duration(milliseconds: 100), () {
+                          _deleteFolder(folder);
+                        });
+                      },
+                    ),
+                  ],
+                ),
+                onTap: () {
+                  setState(() => _selectedFolder = folder);
+                  _loadDocuments();
+                },
+              ),
+            )),
+            SizedBox(height: 16),
+            Divider(),
+          ],
+          if (_documents.isNotEmpty) ...[
+            Padding(
+              padding: EdgeInsets.all(8),
+              child: Text(
+                _selectedFolder == null ? 'Recent Documents' : 'Documents',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.grey[700],
                 ),
               ),
-            ],
-          ],
-          ..._documents.map((doc) => _buildDocumentCard(doc)),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFolderCard(String folderName) {
-    return Card(
-      margin: EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-      child: ListTile(
-        leading: Icon(Icons.folder, color: Colors.orange, size: 40),
-        title: Text(
-          folderName,
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        trailing: PopupMenuButton(
-          itemBuilder: (context) => [
-            PopupMenuItem(
-              value: 'rename',
-              child: Row(
-                children: [
-                  Icon(Icons.edit, size: 20),
-                  SizedBox(width: 8),
-                  Text('Rename'),
-                ],
-              ),
             ),
-            PopupMenuItem(
-              value: 'delete',
-              child: Row(
-                children: [
-                  Icon(Icons.delete, size: 20, color: Colors.red),
-                  SizedBox(width: 8),
-                  Text('Delete', style: TextStyle(color: Colors.red)),
-                ],
-              ),
-            ),
-          ],
-          onSelected: (value) {
-            if (value == 'rename') {
-              _showRenameFolderDialog(folderName);
-            } else if (value == 'delete') {
-              _deleteFolder(folderName);
-            }
-          },
-        ),
-        onTap: () {
-          setState(() => _selectedFolder = folderName);
-          _loadDocuments();
-        },
-      ),
-    );
-  }
-
-  Widget _buildDocumentCard(Document doc) {
-    final isSelected = _selectedDocuments.contains(doc.path);
-    
-    return Card(
-      margin: EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-      color: isSelected ? Colors.blue.shade50 : null,
-      child: ListTile(
-        leading: _isSelectionMode
-            ? Checkbox(
-                value: isSelected,
-                onChanged: (value) => _toggleDocumentSelection(doc.path),
-              )
-            : Icon(Icons.picture_as_pdf, color: Colors.red, size: 40),
-        title: Text(
-          doc.name.replaceAll('.pdf', ''),
-          style: TextStyle(fontWeight: FontWeight.w500),
-        ),
-        subtitle: Text(
-          '${_formatDate(doc.date)} â€¢ ${_formatSize(doc.size)}',
-          style: TextStyle(fontSize: 12),
-        ),
-        trailing: _isSelectionMode
-            ? null
-            : PopupMenuButton(
-                itemBuilder: (context) => [
-                  PopupMenuItem(
-                    value: 'open',
-                    child: Row(
-                      children: [
-                        Icon(Icons.open_in_new, size: 20),
-                        SizedBox(width: 8),
-                        Text('Open'),
-                      ],
-                    ),
-                  ),
-                  PopupMenuItem(
-                    value: 'share',
-                    child: Row(
-                      children: [
-                        Icon(Icons.share, size: 20),
-                        SizedBox(width: 8),
-                        Text('Share'),
-                      ],
-                    ),
-                  ),
-                  if (_selectedFolder == null)
-                    PopupMenuItem(
-                      value: 'move',
-                      child: Row(
-                        children: [
-                          Icon(Icons.drive_file_move, size: 20),
-                          SizedBox(width: 8),
-                          Text('Move to Folder'),
+            ..._documents.map((doc) => Card(
+              child: ListTile(
+                leading: _isSelectionMode
+                    ? Checkbox(
+                        value: _selectedDocuments.contains(doc.path),
+                        onChanged: (value) => _toggleDocumentSelection(doc.path),
+                      )
+                    : Icon(Icons.picture_as_pdf, color: Colors.red, size: 32),
+                title: Text(doc.name),
+                subtitle: Text('${_formatDate(doc.date)} • ${_formatSize(doc.size)}'),
+                trailing: _isSelectionMode
+                    ? null
+                    : PopupMenuButton(
+                        icon: Icon(Icons.more_vert),
+                        itemBuilder: (context) => [
+                          PopupMenuItem(
+                            child: ListTile(
+                              leading: Icon(Icons.visibility, size: 20),
+                              title: Text('View'),
+                              contentPadding: EdgeInsets.zero,
+                            ),
+                            onTap: () {
+                              Future.delayed(Duration(milliseconds: 100), () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => PdfPreviewScreen(pdfPath: doc.path),
+                                  ),
+                                );
+                              });
+                            },
+                          ),
+                          PopupMenuItem(
+                            child: ListTile(
+                              leading: Icon(Icons.edit, size: 20),
+                              title: Text('Rename'),
+                              contentPadding: EdgeInsets.zero,
+                            ),
+                            onTap: () {
+                              Future.delayed(Duration(milliseconds: 100), () {
+                                _showRenameDocumentDialog(doc);
+                              });
+                            },
+                          ),
+                          PopupMenuItem(
+                            child: ListTile(
+                              leading: Icon(Icons.share, size: 20),
+                              title: Text('Share'),
+                              contentPadding: EdgeInsets.zero,
+                            ),
+                            onTap: () {
+                              Future.delayed(Duration(milliseconds: 100), () {
+                                Share.shareXFiles([XFile(doc.path)]);
+                              });
+                            },
+                          ),
+                          if (_selectedFolder == null)
+                            PopupMenuItem(
+                              child: ListTile(
+                                leading: Icon(Icons.drive_file_move, size: 20),
+                                title: Text('Move to Folder'),
+                                contentPadding: EdgeInsets.zero,
+                              ),
+                              onTap: () {
+                                Future.delayed(Duration(milliseconds: 100), () {
+                                  _showMoveToFolderDialog(doc);
+                                });
+                              },
+                            ),
+                          PopupMenuItem(
+                            child: ListTile(
+                              leading: Icon(Icons.delete, size: 20, color: Colors.red),
+                              title: Text('Delete', style: TextStyle(color: Colors.red)),
+                              contentPadding: EdgeInsets.zero,
+                            ),
+                            onTap: () {
+                              Future.delayed(Duration(milliseconds: 100), () {
+                                _deleteDocument(doc);
+                              });
+                            },
+                          ),
                         ],
                       ),
-                    ),
-                  PopupMenuItem(
-                    value: 'delete',
-                    child: Row(
-                      children: [
-                        Icon(Icons.delete, size: 20, color: Colors.red),
-                        SizedBox(width: 8),
-                        Text('Delete', style: TextStyle(color: Colors.red)),
-                      ],
-                    ),
-                  ),
-                ],
-                onSelected: (value) async {
-                  switch (value) {
-                    case 'open':
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => PdfPreviewScreen(pdfPath: doc.path),
-                        ),
-                      );
-                      break;
-                    case 'share':
-                      await Share.shareXFiles([XFile(doc.path)]);
-                      break;
-                    case 'move':
-                      _showMoveToFolderDialog(doc);
-                      break;
-                    case 'delete':
-                      _deleteDocument(doc);
-                      break;
+                onTap: () {
+                  if (_isSelectionMode) {
+                    _toggleDocumentSelection(doc.path);
+                  } else {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => PdfPreviewScreen(pdfPath: doc.path),
+                      ),
+                    );
+                  }
+                },
+                onLongPress: () {
+                  if (!_isSelectionMode) {
+                    setState(() => _isSelectionMode = true);
+                    _toggleDocumentSelection(doc.path);
                   }
                 },
               ),
-        onTap: () {
-          if (_isSelectionMode) {
-            _toggleDocumentSelection(doc.path);
-          } else {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => PdfPreviewScreen(pdfPath: doc.path),
+            )),
+          ] else if (_selectedFolder != null) ...[
+            Center(
+              child: Padding(
+                padding: EdgeInsets.all(32),
+                child: Column(
+                  children: [
+                    Icon(Icons.folder_open, size: 80, color: Colors.grey),
+                    SizedBox(height: 16),
+                    Text(
+                      'This folder is empty',
+                      style: TextStyle(fontSize: 16, color: Colors.grey),
+                    ),
+                  ],
+                ),
               ),
-            );
-          }
-        },
-        onLongPress: () {
-          if (!_isSelectionMode) {
-            setState(() {
-              _isSelectionMode = true;
-              _selectedDocuments.add(doc.path);
-            });
-          }
-        },
+            ),
+          ],
+        ],
       ),
     );
   }
@@ -463,7 +459,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Move ${_selectedDocuments.length} document(s)'),
+        title: Text('Move ${_selectedDocuments.length} documents'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: _folders.map((folder) {
@@ -490,13 +486,12 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
   Future<void> _batchMoveToFolder(String folderName) async {
     try {
       final directory = await getApplicationDocumentsDirectory();
-      int moved = 0;
-
-      for (String docPath in _selectedDocuments) {
-        final doc = _documents.firstWhere((d) => d.path == docPath);
-        final newPath = '${directory.path}/documents/$folderName/${doc.name}';
-        await File(doc.path).rename(newPath);
-        moved++;
+      
+      for (String path in _selectedDocuments) {
+        final file = File(path);
+        final fileName = path.split('/').last.split('\\').last;
+        final newPath = '${directory.path}/documents/$folderName/$fileName';
+        await file.rename(newPath);
       }
 
       setState(() {
@@ -505,9 +500,9 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
       });
       
       await _loadDocuments();
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Moved $moved document(s) to "$folderName"')),
+        SnackBar(content: Text('Moved to "$folderName"')),
       );
     } catch (e) {
       debugPrint('Batch move error: $e');
@@ -517,38 +512,34 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
     }
   }
 
-  void _showBatchDeleteDialog() async {
-    final confirm = await showDialog<bool>(
+  void _showBatchDeleteDialog() {
+    showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: Text('Delete Documents'),
-        content: Text('Delete ${_selectedDocuments.length} document(s)?'),
+        content: Text('Delete ${_selectedDocuments.length} selected documents?'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context, false),
+            onPressed: () => Navigator.pop(context),
             child: Text('Cancel'),
           ),
           ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
+            onPressed: () async {
+              await _batchDelete();
+              Navigator.pop(context);
+            },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             child: Text('Delete'),
           ),
         ],
       ),
     );
-
-    if (confirm == true) {
-      await _batchDelete();
-    }
   }
 
   Future<void> _batchDelete() async {
     try {
-      int deleted = 0;
-
-      for (String docPath in _selectedDocuments) {
-        await File(docPath).delete();
-        deleted++;
+      for (String path in _selectedDocuments) {
+        await File(path).delete();
       }
 
       setState(() {
@@ -557,9 +548,9 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
       });
       
       await _loadDocuments();
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Deleted $deleted document(s)')),
+        SnackBar(content: Text('Documents deleted')),
       );
     } catch (e) {
       debugPrint('Batch delete error: $e');
@@ -579,7 +570,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
           controller: controller,
           decoration: InputDecoration(
             labelText: 'Folder Name',
-            hintText: 'e.g., Receipts, Work, Personal',
+            hintText: 'Enter folder name',
           ),
           autofocus: true,
         ),
@@ -607,17 +598,17 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
     try {
       final directory = await getApplicationDocumentsDirectory();
       final folderDir = Directory('${directory.path}/documents/$folderName');
-      
+
       if (await folderDir.exists()) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Folder already exists')),
+          SnackBar(content: Text('Folder "$folderName" already exists')),
         );
         return;
       }
 
       await folderDir.create(recursive: true);
       await _loadDocuments();
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Folder "$folderName" created')),
       );
@@ -675,7 +666,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
 
       await oldDir.rename(newDir.path);
       await _loadDocuments();
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Folder renamed to "$newName"')),
       );
@@ -683,6 +674,72 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
       debugPrint('Rename folder error: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error renaming folder')),
+      );
+    }
+  }
+
+  // NEW: Rename document dialog
+  void _showRenameDocumentDialog(Document doc) {
+    final currentName = doc.name.replaceAll('.pdf', '');
+    final controller = TextEditingController(text: currentName);
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Rename Document'),
+        content: TextField(
+          controller: controller,
+          decoration: InputDecoration(
+            labelText: 'New Name',
+            suffixText: '.pdf',
+          ),
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final newName = controller.text.trim();
+              if (newName.isNotEmpty && newName != currentName) {
+                await _renameDocument(doc, newName);
+                Navigator.pop(context);
+              }
+            },
+            child: Text('Rename'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // NEW: Rename document function
+  Future<void> _renameDocument(Document doc, String newName) async {
+    try {
+      final file = File(doc.path);
+      final directory = file.parent.path;
+      final newPath = '$directory/$newName.pdf';
+
+      // Check if file with new name already exists
+      if (await File(newPath).exists()) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('A document with name "$newName.pdf" already exists')),
+        );
+        return;
+      }
+
+      await file.rename(newPath);
+      await _loadDocuments();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Document renamed to "$newName.pdf"')),
+      );
+    } catch (e) {
+      debugPrint('Rename document error: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error renaming document')),
       );
     }
   }
@@ -713,7 +770,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
         final folderDir = Directory('${directory.path}/documents/$folderName');
         await folderDir.delete(recursive: true);
         await _loadDocuments();
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Folder deleted')),
         );
@@ -760,7 +817,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
       final newPath = '${directory.path}/documents/$folderName/${doc.name}';
       await File(doc.path).rename(newPath);
       await _loadDocuments();
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Moved to "$folderName"')),
       );
@@ -796,7 +853,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
       try {
         await File(doc.path).delete();
         await _loadDocuments();
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Document deleted')),
         );

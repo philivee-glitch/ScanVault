@@ -21,11 +21,11 @@ android {
         jvmTarget = JavaVersion.VERSION_1_8
     }
     defaultConfig {
-        applicationId = "com.scanvault.docscanner"
+        applicationId = "com.scanvault.premium"
         minSdkVersion = flutter.minSdkVersion
-        targetSdk = 36
-        versionCode = 8
-versionName = "1.2.3"
+        targetSdk = 34
+        versionCode = 1
+        versionName = "1.0.0"
     }
     signingConfigs {
         release {
@@ -38,15 +38,13 @@ versionName = "1.2.3"
     buildTypes {
         release {
             signingConfig = signingConfigs.release
-            minifyEnabled = false
-            shrinkResources = false
+            minifyEnabled = true
+            shrinkResources = true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
 }
 dependencies {
-    implementation 'androidx.appcompat:appcompat:1.7.0'
-    implementation 'androidx.core:core-ktx:1.13.1'
-    implementation 'com.google.android.material:material:1.12.0'
 }
 flutter {
     source = "../.."

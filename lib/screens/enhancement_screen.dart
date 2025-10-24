@@ -25,7 +25,7 @@ class EnhancementScreen extends StatefulWidget {
 
 class _EnhancementScreenState extends State<EnhancementScreen> {
   final SubscriptionManager _subscriptionManager = SubscriptionManager();
-  
+
   String _currentFilter = 'Original';
   double _brightness = 0.0;
   double _contrast = 1.0;
@@ -33,7 +33,7 @@ class _EnhancementScreenState extends State<EnhancementScreen> {
   bool _isProcessing = false;
   String? _processedImagePath;
   List<String> _allPages = [];
-  
+
   final List<String> _filters = ['Original', 'B&W', 'Grayscale', 'Color+'];
 
   @override
@@ -74,7 +74,7 @@ class _EnhancementScreenState extends State<EnhancementScreen> {
               ),
             ),
           ),
-          
+
           // Controls
           Expanded(
             flex: 3,
@@ -262,7 +262,7 @@ class _EnhancementScreenState extends State<EnhancementScreen> {
   Future<void> _showSaveOptions() async {
     final directory = await getApplicationDocumentsDirectory();
     final docDir = Directory('${directory.path}/documents');
-    
+
     if (!await docDir.exists()) {
       await docDir.create(recursive: true);
     }
@@ -329,23 +329,38 @@ class _EnhancementScreenState extends State<EnhancementScreen> {
     try {
       final pdf = pw.Document();
       final allPages = [_processedImagePath!, ...(widget.additionalPages ?? [])];
-      
+
       // Add each page with watermark overlay for free users
       for (String pagePath in allPages) {
         final imageBytes = await File(pagePath).readAsBytes();
+        final decodedImage = img.decodeImage(imageBytes);
+        
+        if (decodedImage == null) continue;
+
         final image = pw.MemoryImage(imageBytes);
+
+        // Create custom page format matching the image dimensions
+        final pageFormat = PdfPageFormat(
+          decodedImage.width.toDouble(),
+          decodedImage.height.toDouble(),
+          marginAll: 0, // NO MARGINS - this fixes the white border issue
+        );
 
         pdf.addPage(
           pw.Page(
-            pageFormat: PdfPageFormat.a4,
+            pageFormat: pageFormat,
+            margin: pw.EdgeInsets.zero, // Ensure no margins
             build: (pw.Context context) {
               return pw.Stack(
                 children: [
-                  // Document image
-                  pw.Center(
-                    child: pw.Image(image, fit: pw.BoxFit.contain),
+                  // Document image - fills entire page
+                  pw.Positioned.fill(
+                    child: pw.Image(
+                      image, 
+                      fit: pw.BoxFit.cover, // Use cover instead of contain to fill page
+                    ),
                   ),
-                  
+
                   // Watermark overlay for free users
                   if (!_subscriptionManager.isPremium)
                     pw.Positioned(
@@ -374,7 +389,7 @@ class _EnhancementScreenState extends State<EnhancementScreen> {
       final savePath = folderName != null
           ? '${directory.path}/documents/$folderName'
           : '${directory.path}/documents';
-      
+
       final saveDir = Directory(savePath);
       if (!await saveDir.exists()) {
         await saveDir.create(recursive: true);
@@ -392,7 +407,7 @@ class _EnhancementScreenState extends State<EnhancementScreen> {
     } catch (e) {
       debugPrint('Save PDF error: $e');
       setState(() => _isProcessing = false);
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
