@@ -1,4 +1,4 @@
-import 'dart:io';
+﻿import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
@@ -27,7 +27,6 @@ class _EnhancementScreenState extends State<EnhancementScreen> {
   final SubscriptionManager _subscriptionManager = SubscriptionManager();
 
   String _currentFilter = 'Original';
-  double _brightness = 0.0;
   double _contrast = 1.0;
   int _rotation = 0;
   bool _isProcessing = false;
@@ -48,23 +47,27 @@ class _EnhancementScreenState extends State<EnhancementScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Enhance Document'),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.check),
-            onPressed: _isProcessing ? null : _showSaveOptions,
-          ),
-        ],
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
+        ),
       ),
       body: Column(
         children: [
-          // Image preview
+          // Image preview - takes most of the space
           Expanded(
-            flex: 2,
             child: Container(
               color: Colors.grey[200],
               child: Center(
                 child: _isProcessing
-                    ? CircularProgressIndicator()
+                    ? Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          CircularProgressIndicator(),
+                          SizedBox(height: 16),
+                          Text('Processing...', style: TextStyle(color: Colors.grey[600])),
+                        ],
+                      )
                     : _processedImagePath != null
                         ? Image.file(
                             File(_processedImagePath!),
@@ -75,129 +78,133 @@ class _EnhancementScreenState extends State<EnhancementScreen> {
             ),
           ),
 
-          // Controls
-          Expanded(
-            flex: 3,
-            child: SingleChildScrollView(
-              padding: EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildFilterSelector(),
-                  SizedBox(height: 16),
-                  _buildBrightnessControl(),
-                  SizedBox(height: 16),
-                  _buildContrastControl(),
-                  SizedBox(height: 16),
-                  _buildRotationControl(),
-                ],
-              ),
+          // Controls - compact, no scrolling needed
+          Container(
+            padding: EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black12,
+                  blurRadius: 4,
+                  offset: Offset(0, -2),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Filters
+                Text('Filter', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                SizedBox(height: 8),
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: _filters.map((filter) {
+                      final isSelected = _currentFilter == filter;
+                      return Padding(
+                        padding: EdgeInsets.only(right: 8),
+                        child: ChoiceChip(
+                          label: Text(filter, style: TextStyle(fontSize: 13)),
+                          selected: isSelected,
+                          onSelected: (selected) {
+                            if (selected) {
+                              setState(() => _currentFilter = filter);
+                              _applyEnhancements();
+                            }
+                          },
+                          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+                
+                SizedBox(height: 12),
+                
+                // Contrast - compact
+                Row(
+                  children: [
+                    Text('Contrast', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                    Expanded(
+                      child: Slider(
+                        value: _contrast,
+                        min: 0.5,
+                        max: 2.0,
+                        divisions: 30,
+                        onChanged: (value) {
+                          setState(() => _contrast = value);
+                        },
+                        onChangeEnd: (value) => _applyEnhancements(),
+                      ),
+                    ),
+                    Text(_contrast.toStringAsFixed(1), style: TextStyle(fontSize: 12, color: Colors.grey)),
+                  ],
+                ),
+                
+                SizedBox(height: 8),
+                
+                // Rotation buttons - compact
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () {
+                          setState(() => _rotation = (_rotation - 90) % 360);
+                          _applyEnhancements();
+                        },
+                        icon: Icon(Icons.rotate_left, size: 18),
+                        label: Text('Left', style: TextStyle(fontSize: 13)),
+                        style: OutlinedButton.styleFrom(
+                          padding: EdgeInsets.symmetric(vertical: 8),
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () {
+                          setState(() => _rotation = (_rotation + 90) % 360);
+                          _applyEnhancements();
+                        },
+                        icon: Icon(Icons.rotate_right, size: 18),
+                        label: Text('Right', style: TextStyle(fontSize: 13)),
+                        style: OutlinedButton.styleFrom(
+                          padding: EdgeInsets.symmetric(vertical: 8),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                
+                SizedBox(height: 12),
+                
+                // SAVE BUTTON - always visible
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: ElevatedButton.icon(
+                    onPressed: _isProcessing ? null : _showSaveOptions,
+                    icon: Icon(Icons.save, size: 22),
+                    label: Text(
+                      'SAVE DOCUMENT',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildFilterSelector() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('Filter', style: TextStyle(fontWeight: FontWeight.bold)),
-        SizedBox(height: 8),
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            children: _filters.map((filter) {
-              final isSelected = _currentFilter == filter;
-              return Padding(
-                padding: EdgeInsets.only(right: 8),
-                child: ChoiceChip(
-                  label: Text(filter),
-                  selected: isSelected,
-                  onSelected: (selected) {
-                    if (selected) {
-                      setState(() => _currentFilter = filter);
-                      _applyEnhancements();
-                    }
-                  },
-                ),
-              );
-            }).toList(),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildBrightnessControl() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('Brightness', style: TextStyle(fontWeight: FontWeight.bold)),
-        Slider(
-          value: _brightness,
-          min: -100,
-          max: 100,
-          divisions: 40,
-          label: _brightness.round().toString(),
-          onChanged: (value) {
-            setState(() => _brightness = value);
-          },
-          onChangeEnd: (value) => _applyEnhancements(),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildContrastControl() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('Contrast', style: TextStyle(fontWeight: FontWeight.bold)),
-        Slider(
-          value: _contrast,
-          min: 0.5,
-          max: 2.0,
-          divisions: 30,
-          label: _contrast.toStringAsFixed(1),
-          onChanged: (value) {
-            setState(() => _contrast = value);
-          },
-          onChangeEnd: (value) => _applyEnhancements(),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildRotationControl() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('Rotation', style: TextStyle(fontWeight: FontWeight.bold)),
-        SizedBox(height: 8),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            ElevatedButton.icon(
-              onPressed: () {
-                setState(() => _rotation = (_rotation - 90) % 360);
-                _applyEnhancements();
-              },
-              icon: Icon(Icons.rotate_left),
-              label: Text('Rotate Left'),
-            ),
-            ElevatedButton.icon(
-              onPressed: () {
-                setState(() => _rotation = (_rotation + 90) % 360);
-                _applyEnhancements();
-              },
-              icon: Icon(Icons.rotate_right),
-              label: Text('Rotate Right'),
-            ),
-          ],
-        ),
-      ],
     );
   }
 
@@ -210,10 +217,12 @@ class _EnhancementScreenState extends State<EnhancementScreen> {
 
       if (image == null) return;
 
+      // Apply rotation first
       if (_rotation != 0) {
         image = img.copyRotate(image, angle: _rotation.toDouble());
       }
 
+      // Apply filter
       switch (_currentFilter) {
         case 'B&W':
           image = img.grayscale(image);
@@ -227,27 +236,14 @@ class _EnhancementScreenState extends State<EnhancementScreen> {
           break;
       }
 
-      // Apply brightness with asymmetric scaling (more aggressive positive, gentle negative)
-      if (_brightness != 0) {
-        double brightnessValue;
-        if (_brightness > 0) {
-          // Positive: 0 to +100 becomes 0 to +2.0 (aggressive brightening)
-          brightnessValue = _brightness / 50;
-        } else {
-          // Negative: -100 to 0 becomes -0.5 to 0 (gentle darkening, won't go fully black)
-          brightnessValue = _brightness / 200;
-        }
-        image = img.adjustColor(image, brightness: brightnessValue);
-      }
-
-      // Apply contrast separately
+      // Apply contrast adjustment
       if (_contrast != 1.0) {
         image = img.adjustColor(image, contrast: _contrast);
       }
 
       final tempDir = await getTemporaryDirectory();
       final processedFile = File('${tempDir.path}/processed_${DateTime.now().millisecondsSinceEpoch}.jpg');
-      await processedFile.writeAsBytes(img.encodeJpg(image));
+      await processedFile.writeAsBytes(img.encodeJpg(image, quality: 95));
 
       setState(() {
         _processedImagePath = processedFile.path;
@@ -256,6 +252,15 @@ class _EnhancementScreenState extends State<EnhancementScreen> {
     } catch (e) {
       debugPrint('Enhancement error: $e');
       setState(() => _isProcessing = false);
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error applying enhancements'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
@@ -330,7 +335,6 @@ class _EnhancementScreenState extends State<EnhancementScreen> {
       final pdf = pw.Document();
       final allPages = [_processedImagePath!, ...(widget.additionalPages ?? [])];
 
-      // Add each page with watermark overlay for free users
       for (String pagePath in allPages) {
         final imageBytes = await File(pagePath).readAsBytes();
         final decodedImage = img.decodeImage(imageBytes);
@@ -339,29 +343,25 @@ class _EnhancementScreenState extends State<EnhancementScreen> {
 
         final image = pw.MemoryImage(imageBytes);
 
-        // Create custom page format matching the image dimensions
         final pageFormat = PdfPageFormat(
           decodedImage.width.toDouble(),
           decodedImage.height.toDouble(),
-          marginAll: 0, // NO MARGINS - this fixes the white border issue
+          marginAll: 0,
         );
 
         pdf.addPage(
           pw.Page(
             pageFormat: pageFormat,
-            margin: pw.EdgeInsets.zero, // Ensure no margins
+            margin: pw.EdgeInsets.zero,
             build: (pw.Context context) {
               return pw.Stack(
                 children: [
-                  // Document image - fills entire page
                   pw.Positioned.fill(
                     child: pw.Image(
                       image, 
-                      fit: pw.BoxFit.cover, // Use cover instead of contain to fill page
+                      fit: pw.BoxFit.cover,
                     ),
                   ),
-
-                  // Watermark overlay for free users
                   if (!_subscriptionManager.isPremium)
                     pw.Positioned(
                       bottom: 30,
@@ -426,7 +426,7 @@ class _EnhancementScreenState extends State<EnhancementScreen> {
       builder: (context) => AlertDialog(
         title: Row(
           children: [
-            Icon(Icons.check_circle, color: Colors.green),
+            Icon(Icons.check_circle, color: Colors.green, size: 28),
             SizedBox(width: 8),
             Expanded(child: Text('PDF Saved!')),
             IconButton(

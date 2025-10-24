@@ -1,4 +1,4 @@
-import 'dart:io';
+ï»¿import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:open_file/open_file.dart';
@@ -332,7 +332,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
                       )
                     : Icon(Icons.picture_as_pdf, color: Colors.red, size: 32),
                 title: Text(doc.name),
-                subtitle: Text('${_formatDate(doc.date)} • ${_formatSize(doc.size)}'),
+                subtitle: Text('${_formatDate(doc.date)} | ${_formatSize(doc.size)}'),
                 trailing: _isSelectionMode
                     ? null
                     : PopupMenuButton(
@@ -678,7 +678,6 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
     }
   }
 
-  // NEW: Rename document dialog
   void _showRenameDocumentDialog(Document doc) {
     final currentName = doc.name.replaceAll('.pdf', '');
     final controller = TextEditingController(text: currentName);
@@ -715,14 +714,12 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
     );
   }
 
-  // NEW: Rename document function
   Future<void> _renameDocument(Document doc, String newName) async {
     try {
       final file = File(doc.path);
       final directory = file.parent.path;
       final newPath = '$directory/$newName.pdf';
 
-      // Check if file with new name already exists
       if (await File(newPath).exists()) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('A document with name "$newName.pdf" already exists')),
