@@ -12,12 +12,14 @@ import 'package:open_file_android/open_file_android.dart' as open_file_android;
 import 'package:path_provider_android/path_provider_android.dart' as path_provider_android;
 import 'package:shared_preferences_android/shared_preferences_android.dart' as shared_preferences_android;
 import 'package:url_launcher_android/url_launcher_android.dart' as url_launcher_android;
+import 'package:webview_flutter_android/webview_flutter_android.dart' as webview_flutter_android;
 import 'package:camera_avfoundation/camera_avfoundation.dart' as camera_avfoundation;
 import 'package:image_picker_ios/image_picker_ios.dart' as image_picker_ios;
 import 'package:open_file_ios/open_file_ios.dart' as open_file_ios;
 import 'package:path_provider_foundation/path_provider_foundation.dart' as path_provider_foundation;
 import 'package:shared_preferences_foundation/shared_preferences_foundation.dart' as shared_preferences_foundation;
 import 'package:url_launcher_ios/url_launcher_ios.dart' as url_launcher_ios;
+import 'package:webview_flutter_wkwebview/webview_flutter_wkwebview.dart' as webview_flutter_wkwebview;
 import 'package:file_selector_linux/file_selector_linux.dart' as file_selector_linux;
 import 'package:image_picker_linux/image_picker_linux.dart' as image_picker_linux;
 import 'package:open_file_linux/open_file_linux.dart' as open_file_linux;
@@ -32,6 +34,7 @@ import 'package:open_file_mac/open_file_mac.dart' as open_file_mac;
 import 'package:path_provider_foundation/path_provider_foundation.dart' as path_provider_foundation;
 import 'package:shared_preferences_foundation/shared_preferences_foundation.dart' as shared_preferences_foundation;
 import 'package:url_launcher_macos/url_launcher_macos.dart' as url_launcher_macos;
+import 'package:webview_flutter_wkwebview/webview_flutter_wkwebview.dart' as webview_flutter_wkwebview;
 import 'package:file_selector_windows/file_selector_windows.dart' as file_selector_windows;
 import 'package:image_picker_windows/image_picker_windows.dart' as image_picker_windows;
 import 'package:open_file_windows/open_file_windows.dart' as open_file_windows;
@@ -101,6 +104,15 @@ class _PluginRegistrant {
         );
       }
 
+      try {
+        webview_flutter_android.AndroidWebViewPlatform.registerWith();
+      } catch (err) {
+        print(
+          '`webview_flutter_android` threw an error: $err. '
+          'The app may not function as expected until you remove this plugin from pubspec.yaml'
+        );
+      }
+
     } else if (Platform.isIOS) {
       try {
         camera_avfoundation.AVFoundationCamera.registerWith();
@@ -152,6 +164,15 @@ class _PluginRegistrant {
       } catch (err) {
         print(
           '`url_launcher_ios` threw an error: $err. '
+          'The app may not function as expected until you remove this plugin from pubspec.yaml'
+        );
+      }
+
+      try {
+        webview_flutter_wkwebview.WebKitWebViewPlatform.registerWith();
+      } catch (err) {
+        print(
+          '`webview_flutter_wkwebview` threw an error: $err. '
           'The app may not function as expected until you remove this plugin from pubspec.yaml'
         );
       }
@@ -280,6 +301,15 @@ class _PluginRegistrant {
       } catch (err) {
         print(
           '`url_launcher_macos` threw an error: $err. '
+          'The app may not function as expected until you remove this plugin from pubspec.yaml'
+        );
+      }
+
+      try {
+        webview_flutter_wkwebview.WebKitWebViewPlatform.registerWith();
+      } catch (err) {
+        print(
+          '`webview_flutter_wkwebview` threw an error: $err. '
           'The app may not function as expected until you remove this plugin from pubspec.yaml'
         );
       }

@@ -21,7 +21,7 @@ android {
         jvmTarget = JavaVersion.VERSION_11
     }
     defaultConfig {
-        applicationId = "com.scanvault.docscanner"
+        applicationId = "com.scanvault.documentscanner.free"
         minSdk = 26
         targetSdk = 35
         versionCode = 10

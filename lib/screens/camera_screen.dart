@@ -1,8 +1,9 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
 import 'package:cunning_document_scanner/cunning_document_scanner.dart';
 import 'dart:io';
 import '../subscription_manager.dart';
+import '../ad_manager.dart';
 import 'corner_adjustment_screen.dart';
 import 'enhancement_screen.dart';
 import 'settings_screen.dart';
@@ -15,9 +16,20 @@ class CameraScreen extends StatefulWidget {
 }
 
 class _CameraScreenState extends State<CameraScreen> {
+  final AdManager _adManager = AdManager();
+  int _scanCountSinceLastAd = 0;
   final SubscriptionManager _subscriptionManager = SubscriptionManager();
   List<String> _scannedImages = [];
   bool _isScanning = false;
+
+    @override
+  void initState() {
+    super.initState();
+    // Preload interstitial ad for free users
+    if (!_subscriptionManager.isPremium) {
+      _adManager.loadInterstitialAd();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -154,6 +166,15 @@ class _CameraScreenState extends State<CameraScreen> {
         }
         
         await _subscriptionManager.incrementScanCount();
+
+        // Show interstitial ad every 3 scans (free users only)
+        if (!isPremium) {
+          _scanCountSinceLastAd++;
+          if (_scanCountSinceLastAd >= 3) {
+            _adManager.showInterstitialAd();
+            _scanCountSinceLastAd = 0;
+          }
+        }
         
         setState(() {
           _scannedImages.addAll(pictures!);
@@ -165,7 +186,7 @@ class _CameraScreenState extends State<CameraScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                '✓ Page ${_scannedImages.length} captured${!isPremium ? ' • $remaining scans left today' : ''}',
+                '✓ Page ${_scannedImages.length} captured${!isPremium ? ' • $remaining scans left this month' : ''}',
               ),
               backgroundColor: Colors.green,
               duration: Duration(seconds: 2),
@@ -250,8 +271,8 @@ class _CameraScreenState extends State<CameraScreen> {
                   SizedBox(height: 8),
                   Text('Unlock multi-page scanning:'),
                   SizedBox(height: 4),
-                  _buildFeature('📄 Scan unlimited pages per document'),
-                  _buildFeature('♾️ Unlimited daily scans'),
+                  _buildFeature('ðŸ“„ Scan unlimited pages per document'),
+                  _buildFeature('â™¾ï¸ Unlimited daily scans'),
                   _buildFeature('🚫 No watermarks'),
                 ],
               ),
@@ -307,10 +328,10 @@ class _CameraScreenState extends State<CameraScreen> {
             SizedBox(height: 16),
             Text('With Premium you get:'),
             SizedBox(height: 8),
-            _buildFeature('📄 Unlimited pages per document'),
-            _buildFeature('♾️ Unlimited daily scans'),
+            _buildFeature('ðŸ“„ Unlimited pages per document'),
+            _buildFeature('â™¾ï¸ Unlimited daily scans'),
             _buildFeature('🤖 AI document analysis'),
-            _buildFeature('🔍 OCR text extraction'),
+            _buildFeature('ðŸ” OCR text extraction'),
             _buildFeature('🚫 No watermarks'),
             SizedBox(height: 16),
             Container(
@@ -326,7 +347,7 @@ class _CameraScreenState extends State<CameraScreen> {
                   SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      '🎉 Start 7-day FREE trial!',
+                      'Upgrade to Premium',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         color: Colors.green.shade900,
@@ -346,7 +367,9 @@ class _CameraScreenState extends State<CameraScreen> {
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
-              SubscriptionManager.showSubscriptionDialog(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Upgrade to Premium for unlimited scans!')),
+              );
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.blue,
@@ -388,7 +411,9 @@ class _CameraScreenState extends State<CameraScreen> {
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
-              SubscriptionManager.showSubscriptionDialog(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Upgrade to Premium for unlimited scans!')),
+              );
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.blue,
@@ -406,3 +431,6 @@ class _CameraScreenState extends State<CameraScreen> {
     super.dispose();
   }
 }
+
+
+

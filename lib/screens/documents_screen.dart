@@ -5,6 +5,7 @@ import 'package:open_file/open_file.dart';
 import 'package:share_plus/share_plus.dart';
 import 'pdf_preview_screen.dart';
 import 'document_analysis_screen.dart';
+import '../subscription_manager.dart';
 
 class Document {
   final String name;
@@ -30,6 +31,7 @@ class DocumentsScreen extends StatefulWidget {
 }
 
 class _DocumentsScreenState extends State<DocumentsScreen> {
+  final SubscriptionManager _subscriptionManager = SubscriptionManager();
   List<Document> _documents = [];
   List<String> _folders = [];
   bool _isLoading = true;
@@ -114,12 +116,53 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
   }
 
   void _toggleSelectionMode() {
+    if (!_subscriptionManager.canUseBatchOperations() && !_isSelectionMode) {
+      _showPremiumFeatureDialog('Batch Operations');
+      return;
+    }
     setState(() {
       _isSelectionMode = !_isSelectionMode;
       if (!_isSelectionMode) {
         _selectedDocuments.clear();
       }
     });
+  }
+
+  void _showPremiumFeatureDialog(String featureName) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(Icons.star, color: Colors.amber),
+            SizedBox(width: 8),
+            Text('Premium Feature'),
+          ],
+        ),
+        content: Text(
+          '$featureName is a premium feature.\n\nUpgrade to Premium for:\n• Unlimited scans\n• Batch operations\n• AI Analysis & OCR\n• No watermarks\n• And more!\n\nOnly \$4.99/month',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Maybe Later'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Premium purchase coming soon!')),
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.amber,
+              foregroundColor: Colors.black,
+            ),
+            child: Text('Upgrade Now'),
+          ),
+        ],
+      ),
+    );
   }
 
   void _toggleDocumentSelection(String path) {
@@ -575,6 +618,11 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
   }
 
   void _showCreateFolderDialog() {
+    // Check folder limit
+    if (_folders.length >= _subscriptionManager.getMaxFolders()) {
+      _showPremiumFeatureDialog('Unlimited Folders');
+      return;
+    }
     final controller = TextEditingController();
     showDialog(
       context: context,

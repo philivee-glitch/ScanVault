@@ -1,1 +1,0 @@
- C:\\Users\\phili\\Documents\\ScanVault_premium\\.dart_tool\\flutter_build\\ddd144090eed35d279b17bed5ca7413b\\native_assets.json: 

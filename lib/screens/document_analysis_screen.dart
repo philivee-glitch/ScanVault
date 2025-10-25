@@ -1,6 +1,7 @@
-import 'dart:io';
+﻿import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../subscription_manager.dart';
 import '../ocr_service.dart';
 import '../ai_service.dart';
 
@@ -19,6 +20,7 @@ class DocumentAnalysisScreen extends StatefulWidget {
 }
 
 class _DocumentAnalysisScreenState extends State<DocumentAnalysisScreen> {
+  final SubscriptionManager _subscriptionManager = SubscriptionManager();
   final OCRService _ocrService = OCRService();
   final AIService _aiService = AIService();
   final TextEditingController _questionController = TextEditingController();
@@ -46,6 +48,16 @@ class _DocumentAnalysisScreenState extends State<DocumentAnalysisScreen> {
   }
 
   Future<void> _performOCR() async {
+    // Check if user has premium for OCR
+    if (!_subscriptionManager.canUseOCR()) {
+      setState(() {
+        _extractedText = 'OCR Text Recognition is a premium feature. Upgrade to Premium to extract text from your documents.';
+        _isLoadingOCR = false;
+        _summary = 'Upgrade to Premium to use AI Analysis.';
+        _isLoadingSummary = false;
+      });
+      return;
+    }
     try {
       final result = await _ocrService.extractText(widget.imagePath);
       final text = result?.text ?? '';
@@ -102,6 +114,8 @@ class _DocumentAnalysisScreenState extends State<DocumentAnalysisScreen> {
     });
 
     _questionController.clear();
+
+    FocusScope.of(context).unfocus();
     
     // Scroll to bottom
     Future.delayed(Duration(milliseconds: 100), () {
@@ -151,6 +165,7 @@ class _DocumentAnalysisScreenState extends State<DocumentAnalysisScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       appBar: AppBar(
         title: Text('Document Analysis'),
         actions: [
@@ -214,7 +229,7 @@ class _DocumentAnalysisScreenState extends State<DocumentAnalysisScreen> {
 
   Widget _buildSummaryTab() {
     return SingleChildScrollView(
-      padding: EdgeInsets.all(16),
+      padding: EdgeInsets.fromLTRB(16, 16, 16, 100),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -244,7 +259,7 @@ class _DocumentAnalysisScreenState extends State<DocumentAnalysisScreen> {
             )
           else
             Container(
-              padding: EdgeInsets.all(16),
+              padding: EdgeInsets.fromLTRB(16, 16, 16, 100),
               decoration: BoxDecoration(
                 color: Colors.purple.shade50,
                 borderRadius: BorderRadius.circular(12),
@@ -323,8 +338,8 @@ class _DocumentAnalysisScreenState extends State<DocumentAnalysisScreen> {
           child: SafeArea(
             top: false,
             child: Padding(
-              padding: EdgeInsets.all(16),
-              child: Row(
+              padding: EdgeInsets.fromLTRB(16, 16, 16, 16),
+                child: Row(
                 children: [
                   Expanded(
                     child: TextField(
@@ -402,14 +417,14 @@ class _DocumentAnalysisScreenState extends State<DocumentAnalysisScreen> {
             SizedBox(width: 12),
             Text('AI is thinking...'),
           ],
-        ),
       ),
+        ),
     );
   }
 
   Widget _buildFullTextTab() {
     return SingleChildScrollView(
-      padding: EdgeInsets.all(16),
+      padding: EdgeInsets.fromLTRB(16, 16, 16, 100),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -493,3 +508,7 @@ class ChatMessage {
     required this.timestamp,
   });
 }
+
+
+
+

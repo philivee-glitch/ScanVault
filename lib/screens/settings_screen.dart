@@ -6,6 +6,7 @@ import 'dart:io';
 import '../subscription_manager.dart';
 import 'privacy_policy_screen.dart';
 import 'terms_of_service_screen.dart';
+import 'premium_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({Key? key}) : super(key: key);
@@ -29,7 +30,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _loadInfo() async {
     final packageInfo = await PackageInfo.fromPlatform();
     final premium = _subscriptionManager.isPremium;
-    final inTrial = _subscriptionManager.isInTrial;
+    final inTrial = false; // Trial not implemented yet
     
     setState(() {
       _version = packageInfo.version;
@@ -54,10 +55,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ListTile(
               leading: Icon(Icons.workspace_premium, color: Colors.amber),
               title: Text('Upgrade to Premium'),
-              subtitle: Text('Unlock all features with 7-day free trial'),
+              subtitle: Text('Unlock all premium features'),
               trailing: Icon(Icons.arrow_forward_ios, size: 16),
               onTap: () {
-                SubscriptionManager.showSubscriptionDialog(context);
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => PremiumScreen()),
+                  );
               },
             ),
           
@@ -158,8 +162,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
       title: Text(_isPremium ? 'Premium Account' : 'Free Account'),
       subtitle: _isInTrial
-          ? Text('Trial: ${_subscriptionManager.getTrialTimeRemaining()}')
-          : Text(_isPremium ? 'All features unlocked' : '5 scans per day'),
+          ? Text('Trial: ${"N/A"}')
+          : Text(_isPremium ? 'All features unlocked' : '10 scans per month'),
       trailing: Container(
         padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
@@ -186,7 +190,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
 
     try {
-      await _subscriptionManager.restorePurchases();
+      // Restore purchases not implemented yet
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Restore purchases coming soon!')),
+      );
       
       if (mounted) {
         Navigator.pop(context); // Close loading

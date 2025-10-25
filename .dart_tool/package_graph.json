@@ -1,11 +1,11 @@
 {
   "roots": [
-    "scanvault_premium"
+    "scanvault_freemium"
   ],
   "packages": [
     {
-      "name": "scanvault_premium",
-      "version": "1.2.3+8",
+      "name": "scanvault_freemium",
+      "version": "1.0.0+1",
       "dependencies": [
         "camera",
         "cunning_document_scanner",
@@ -13,6 +13,7 @@
         "flutter",
         "flutter_pdfview",
         "google_mlkit_text_recognition",
+        "google_mobile_ads",
         "image",
         "image_picker",
         "in_app_purchase",
@@ -70,6 +71,17 @@
         "path",
         "web",
         "win32"
+      ]
+    },
+    {
+      "name": "google_mobile_ads",
+      "version": "5.3.1",
+      "dependencies": [
+        "flutter",
+        "meta",
+        "webview_flutter",
+        "webview_flutter_android",
+        "webview_flutter_wkwebview"
       ]
     },
     {
@@ -399,6 +411,35 @@
       "name": "ffi",
       "version": "2.1.4",
       "dependencies": []
+    },
+    {
+      "name": "webview_flutter",
+      "version": "4.13.0",
+      "dependencies": [
+        "flutter",
+        "webview_flutter_android",
+        "webview_flutter_platform_interface",
+        "webview_flutter_wkwebview"
+      ]
+    },
+    {
+      "name": "webview_flutter_wkwebview",
+      "version": "3.23.1",
+      "dependencies": [
+        "flutter",
+        "meta",
+        "path",
+        "webview_flutter_platform_interface"
+      ]
+    },
+    {
+      "name": "webview_flutter_android",
+      "version": "4.10.5",
+      "dependencies": [
+        "flutter",
+        "meta",
+        "webview_flutter_platform_interface"
+      ]
     },
     {
       "name": "permission_handler_platform_interface",
@@ -993,6 +1034,15 @@
         "source_span",
         "string_scanner",
         "typed_data"
+      ]
+    },
+    {
+      "name": "webview_flutter_platform_interface",
+      "version": "2.14.0",
+      "dependencies": [
+        "flutter",
+        "meta",
+        "plugin_platform_interface"
       ]
     },
     {

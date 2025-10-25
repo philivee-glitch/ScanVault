@@ -7,6 +7,7 @@ import 'package:image/image.dart' as img;
 import '../subscription_manager.dart';
 import 'documents_screen.dart';
 import 'pdf_preview_screen.dart';
+import 'premium_screen.dart';
 import 'document_analysis_screen.dart';
 
 class EnhancementScreen extends StatefulWidget {
@@ -25,10 +26,7 @@ class EnhancementScreen extends StatefulWidget {
 
 class _EnhancementScreenState extends State<EnhancementScreen> {
   final SubscriptionManager _subscriptionManager = SubscriptionManager();
-
   String _currentFilter = 'Original';
-  double _contrast = 1.0;
-  double _saturation = 1.0;
   int _rotation = 0;
   bool _isProcessing = false;
   String? _processedImagePath;
@@ -123,51 +121,9 @@ class _EnhancementScreenState extends State<EnhancementScreen> {
                 ),
                 
                 SizedBox(height: 12),
-                
-                // Contrast
-                Row(
-                  children: [
-                    Text('Contrast', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                    Expanded(
-                      child: Slider(
-                        value: _contrast,
-                        min: 0.5,
-                        max: 2.0,
-                        divisions: 30,
-                        onChanged: (value) {
-                          setState(() => _contrast = value);
-                        },
-                        onChangeEnd: (value) => _applyEnhancements(),
-                      ),
-                    ),
-                    Text(_contrast.toStringAsFixed(1), style: TextStyle(fontSize: 12, color: Colors.grey)),
-                  ],
-                ),
-                
-                SizedBox(height: 4),
-                
-                // Saturation
-                Row(
-                  children: [
-                    Text('Color', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                    Expanded(
-                      child: Slider(
-                        value: _saturation,
-                        min: 0.0,
-                        max: 2.0,
-                        divisions: 40,
-                        onChanged: (value) {
-                          setState(() => _saturation = value);
-                        },
-                        onChangeEnd: (value) => _applyEnhancements(),
-                      ),
-                    ),
-                    Text(_saturation.toStringAsFixed(1), style: TextStyle(fontSize: 12, color: Colors.grey)),
-                  ],
-                ),
-                
-                SizedBox(height: 8),
-                
+
+                SizedBox(height: 12),
+
                 // Rotation
                 Row(
                   children: [
@@ -263,8 +219,8 @@ class _EnhancementScreenState extends State<EnhancementScreen> {
       final result = await _processImage(
         widget.imagePath,
         _currentFilter,
-        _contrast,
-        _saturation,
+        1.0,
+          1.0,
         _rotation,
       );
 
@@ -353,6 +309,12 @@ class _EnhancementScreenState extends State<EnhancementScreen> {
   void _navigateToAIAnalysis() {
     if (_processedImagePath == null) return;
     
+    // Check if user has premium
+    if (!_subscriptionManager.canUseAI()) {
+      _showPremiumDialog();
+      return;
+    }
+    
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -361,6 +323,13 @@ class _EnhancementScreenState extends State<EnhancementScreen> {
           documentName: 'Scanned Document',
         ),
       ),
+    );
+  }
+
+  void _showPremiumDialog() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => PremiumScreen()),
     );
   }
   Future<void> _showSaveOptions() async {
@@ -465,11 +434,11 @@ class _EnhancementScreenState extends State<EnhancementScreen> {
                       bottom: 30,
                       right: 30,
                       child: pw.Opacity(
-                        opacity: 0.3,
+                        opacity: 0.25,
                         child: pw.Text(
                           'ScanVault',
                           style: pw.TextStyle(
-                            fontSize: 24,
+                            fontSize: 72,
                             color: PdfColors.grey700,
                             fontWeight: pw.FontWeight.bold,
                           ),
@@ -601,3 +570,13 @@ class _EnhancementScreenState extends State<EnhancementScreen> {
     );
   }
 }
+
+
+
+
+
+
+
+
+
+

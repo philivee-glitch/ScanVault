@@ -7,6 +7,7 @@ import '../permissions_manager.dart';
 import 'camera_screen.dart';
 import 'documents_screen.dart';
 import 'settings_screen.dart';
+import 'premium_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -175,9 +176,9 @@ class _HomeScreenState extends State<HomeScreen> {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    if (_subscriptionManager.isInTrial)
+                    if (false) // Trial not implemented
                       Text(
-                        'Trial: ${_subscriptionManager.getTrialTimeRemaining()}',
+                        'Trial: ${"N/A"}',
                         style: TextStyle(
                           fontSize: 14,
                           color: Colors.grey[700],
@@ -211,7 +212,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      '$_remainingScans scans remaining today',
+                      '$_remainingScans scans remaining this month',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -223,7 +224,7 @@ class _HomeScreenState extends State<HomeScreen> {
               SizedBox(height: 12),
               ElevatedButton.icon(
                 onPressed: () {
-                  SubscriptionManager.showSubscriptionDialog(context);
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => PremiumScreen()));
                 },
                 icon: Icon(Icons.upgrade, size: 20),
                 label: Text('Upgrade to Premium'),
@@ -245,7 +246,7 @@ class _HomeScreenState extends State<HomeScreen> {
     
     if (!canScan) {
       // Show upgrade dialog
-      SubscriptionManager.showSubscriptionDialog(context);
+      Navigator.push(context, MaterialPageRoute(builder: (context) => PremiumScreen()));
       return;
     }
 
