@@ -12,6 +12,7 @@ void main() async {
   // Initialize services
   await OCRService().initialize();
   await SubscriptionManager().initialize();
+  await AdManager().initialize();
   
   // Set portrait orientation
   SystemChrome.setPreferredOrientations([

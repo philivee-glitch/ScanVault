@@ -2,6 +2,7 @@
 import 'package:camera/camera.dart';
 import 'package:cunning_document_scanner/cunning_document_scanner.dart';
 import 'dart:io';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../subscription_manager.dart';
 import '../ad_manager.dart';
 import 'corner_adjustment_screen.dart';
@@ -22,19 +23,32 @@ class _CameraScreenState extends State<CameraScreen> {
   List<String> _scannedImages = [];
   bool _isScanning = false;
 
-    @override
+  @override
   void initState() {
     super.initState();
+    _loadScanCount();
     // Preload interstitial ad for free users
     if (!_subscriptionManager.isPremium) {
       _adManager.loadInterstitialAd();
     }
   }
 
+  Future<void> _loadScanCount() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _scanCountSinceLastAd = prefs.getInt('scanCountSinceLastAd') ?? 0;
+    });
+  }
+
+  Future<void> _saveScanCount() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('scanCountSinceLastAd', _scanCountSinceLastAd);
+  }
+
   @override
   Widget build(BuildContext context) {
     final isPremium = _subscriptionManager.isPremium;
-    
+
     return Scaffold(
       appBar: AppBar(
         title: Text('Scan Document'),
@@ -61,7 +75,7 @@ class _CameraScreenState extends State<CameraScreen> {
             ),
             SizedBox(height: 24),
             Text(
-              _scannedImages.isEmpty 
+              _scannedImages.isEmpty
                   ? 'Ready to Scan'
                   : '${_scannedImages.length} page(s) scanned',
               style: TextStyle(
@@ -132,17 +146,16 @@ class _CameraScreenState extends State<CameraScreen> {
       ),
     );
   }
-
   Future<void> _scanDocument() async {
     final isPremium = _subscriptionManager.isPremium;
-    
+
     if (!isPremium && _scannedImages.isNotEmpty) {
       _showMultiPageUpgradeDialog();
       return;
     }
-    
+
     final canScan = await _subscriptionManager.canScanToday();
-    
+
     if (!canScan) {
       if (mounted) {
         _showUpgradeDialog();
@@ -164,25 +177,24 @@ class _CameraScreenState extends State<CameraScreen> {
           }
           pictures = [pictures.first];
         }
-        
+
         await _subscriptionManager.incrementScanCount();
 
         // Show interstitial ad every 3 scans (free users only)
         if (!isPremium) {
           _scanCountSinceLastAd++;
+          await _saveScanCount();
+          debugPrint('Scan count: $_scanCountSinceLastAd');
           if (_scanCountSinceLastAd >= 3) {
             _adManager.showInterstitialAd();
             _scanCountSinceLastAd = 0;
           }
         }
-        
         setState(() {
           _scannedImages.addAll(pictures!);
         });
-
         if (mounted) {
           final remaining = await _subscriptionManager.getRemainingScans();
-          
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
@@ -209,22 +221,37 @@ class _CameraScreenState extends State<CameraScreen> {
     }
   }
 
-  void _finishScanning() {
+  Future<void> _finishScanning() async {
     if (_scannedImages.isEmpty) return;
 
+    final isPremium = _subscriptionManager.isPremium;
+
+    // Show interstitial ad before navigating (free users only)
+    if (!isPremium) {
+      debugPrint('Scan count before ad check: $_scanCountSinceLastAd');
+      if (_scanCountSinceLastAd >= 3) {
+        debugPrint('Showing interstitial ad...');
+        _scanCountSinceLastAd = 0;
+        _adManager.showInterstitialAd(onAdClosed: _navigateToEnhancement);
+        return;
+      }
+    }
+    _navigateToEnhancement();
+  }
+
+  void _navigateToEnhancement() {
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
         builder: (context) => EnhancementScreen(
           imagePath: _scannedImages.first,
-          additionalPages: _scannedImages.length > 1 
-              ? _scannedImages.sublist(1) 
+          additionalPages: _scannedImages.length > 1
+              ? _scannedImages.sublist(1)
               : null,
         ),
       ),
     );
   }
-
   void _showMultiPageBlockedDialog() {
     showDialog(
       context: context,
@@ -241,39 +268,40 @@ class _CameraScreenState extends State<CameraScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'You scanned multiple pages, but only the first page will be saved.',
-              style: TextStyle(fontSize: 15),
+              'You scanned multiple pages, but only the first page will be saved in the free version.',
+              style: TextStyle(fontSize: 16),
             ),
+            SizedBox(height: 16),
+            Text(
+              'Upgrade to Premium to unlock:',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 8),
+            _buildFeature('Unlimited multi-page scanning'),
+            _buildFeature('AI-powered enhancement'),
+            _buildFeature('OCR text recognition'),
+            _buildFeature('Cloud backup'),
             SizedBox(height: 16),
             Container(
               padding: EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.amber.shade50,
+                color: Colors.green.shade50,
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.amber),
+                border: Border.all(color: Colors.green.shade200),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              child: Row(
                 children: [
-                  Row(
-                    children: [
-                      Icon(Icons.workspace_premium, color: Colors.amber.shade700),
-                      SizedBox(width: 8),
-                      Text(
-                        'Upgrade to Premium',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
+                  Icon(Icons.celebration, color: Colors.green),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Start 7-day FREE trial',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.green.shade900,
                       ),
-                    ],
+                    ),
                   ),
-                  SizedBox(height: 8),
-                  Text('Unlock multi-page scanning:'),
-                  SizedBox(height: 4),
-                  _buildFeature('ðŸ“„ Scan unlimited pages per document'),
-                  _buildFeature('â™¾ï¸ Unlimited daily scans'),
-                  _buildFeature('🚫 No watermarks'),
                 ],
               ),
             ),
@@ -282,21 +310,20 @@ class _CameraScreenState extends State<CameraScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Continue'),
+            child: Text('Continue with First Page'),
           ),
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => SettingsScreen()),
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Upgrade to Premium for multi-page scans!')),
               );
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.amber,
-              foregroundColor: Colors.black,
+              backgroundColor: Colors.blue,
+              foregroundColor: Colors.white,
             ),
-            child: Text('Upgrade Now'),
+            child: Text('Start Free Trial'),
           ),
         ],
       ),
@@ -319,27 +346,26 @@ class _CameraScreenState extends State<CameraScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Multi-page scanning is a Premium feature!',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
+              'Multi-page scanning is a Premium feature.',
+              style: TextStyle(fontSize: 16),
             ),
             SizedBox(height: 16),
-            Text('With Premium you get:'),
+            Text(
+              'Upgrade to Premium to unlock:',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
             SizedBox(height: 8),
-            _buildFeature('ðŸ“„ Unlimited pages per document'),
-            _buildFeature('â™¾ï¸ Unlimited daily scans'),
-            _buildFeature('🤖 AI document analysis'),
-            _buildFeature('ðŸ” OCR text extraction'),
-            _buildFeature('🚫 No watermarks'),
+            _buildFeature('Unlimited multi-page scanning'),
+            _buildFeature('AI-powered enhancement'),
+            _buildFeature('OCR text recognition'),
+            _buildFeature('Cloud backup'),
             SizedBox(height: 16),
             Container(
               padding: EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: Colors.green.shade50,
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.green),
+                border: Border.all(color: Colors.green.shade200),
               ),
               child: Row(
                 children: [
@@ -431,6 +457,3 @@ class _CameraScreenState extends State<CameraScreen> {
     super.dispose();
   }
 }
-
-
-

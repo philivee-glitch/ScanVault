@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:in_app_review/in_app_review.dart';
@@ -8,6 +8,8 @@ import 'camera_screen.dart';
 import 'documents_screen.dart';
 import 'settings_screen.dart';
 import 'premium_screen.dart';
+import '../ad_manager.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -18,6 +20,9 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final SubscriptionManager _subscriptionManager = SubscriptionManager();
+  final AdManager _adManager = AdManager();
+  BannerAd? _bannerAd;
+  bool _isBannerAdLoaded = false;
   final InAppReview _inAppReview = InAppReview.instance;
   int _remainingScans = 5;
   bool _isPremium = false;
@@ -26,6 +31,18 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _loadUserStatus();
+    _loadBannerAd();
+  }
+
+    void _loadBannerAd() {
+    if (!_isPremium) {
+      _adManager.loadBannerAd((ad) {
+        setState(() {
+          _bannerAd = ad;
+          _isBannerAdLoaded = true;
+        });
+      });
+    }
   }
 
   Future<void> _loadUserStatus() async {
@@ -149,13 +166,19 @@ class _HomeScreenState extends State<HomeScreen> {
                 ],
               ),
             ),
-          ],
+                ],
+          ),
         ),
-      ),
-    );
-  }
+        bottomNavigationBar: !_isPremium && _isBannerAdLoaded && _bannerAd != null
+            ? Container(
+                height: _bannerAd!.size.height.toDouble(),
+                child: AdWidget(ad: _bannerAd!),
+              )
+            : null,
+      );
+    }
 
-  Widget _buildStatusCard() {
+    Widget _buildStatusCard() {
     if (_isPremium) {
       return Card(
         color: Colors.amber.shade50,
@@ -281,3 +304,9 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 }
+
+
+
+
+
+
