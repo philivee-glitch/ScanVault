@@ -162,7 +162,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       title: Text(_isPremium ? 'Premium Account' : 'Free Account'),
       subtitle: _isInTrial
           ? const Text('Trial: ${"N/A"}')
-          : Text(_isPremium ? 'All features unlocked' : '10 scans per month'),
+          : Text(_isPremium ? 'All features unlocked' : 'Unlimited scans (ad-supported)'),
       trailing: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
