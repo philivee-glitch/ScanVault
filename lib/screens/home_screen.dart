@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:in_app_review/in_app_review.dart';
 import '../subscription_manager.dart';
 import '../permissions_manager.dart';
 import 'camera_screen.dart';
@@ -18,7 +17,6 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final SubscriptionManager _subscriptionManager = SubscriptionManager();
-  final InAppReview _inAppReview = InAppReview.instance;
   int _remainingScans = 5;
   bool _isPremium = false;
 
@@ -51,21 +49,10 @@ class _HomeScreenState extends State<HomeScreen> {
     
     // Show review after 5 scans, only once
     if (newTotal == 5 && !reviewRequested) {
-      await _requestReview();
       await prefs.setBool('review_requested', true);
     }
   }
 
-  Future<void> _requestReview() async {
-    try {
-      if (await _inAppReview.isAvailable()) {
-        _inAppReview.requestReview();
-      }
-    } catch (e) {
-      debugPrint('Error requesting review: $e');
-      // Fail silently - don't disrupt user experience
-    }
-  }
 
   @override
   Widget build(BuildContext context) {

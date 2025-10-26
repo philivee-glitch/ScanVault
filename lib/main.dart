@@ -2,7 +2,6 @@
 import 'package:flutter/services.dart';
 import 'screens/home_screen.dart';
 import 'subscription_manager.dart';
-import 'ad_manager.dart';
 import 'subscription_manager.dart';
 import 'ocr_service.dart';
 

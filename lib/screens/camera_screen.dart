@@ -3,7 +3,6 @@ import 'package:camera/camera.dart';
 import 'package:cunning_document_scanner/cunning_document_scanner.dart';
 import 'dart:io';
 import '../subscription_manager.dart';
-import '../ad_manager.dart';
 import 'corner_adjustment_screen.dart';
 import 'enhancement_screen.dart';
 import 'settings_screen.dart';
