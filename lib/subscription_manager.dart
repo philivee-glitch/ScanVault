@@ -1,4 +1,4 @@
-﻿import 'package:shared_preferences/shared_preferences.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SubscriptionManager {
   static final SubscriptionManager _instance = SubscriptionManager._internal();
@@ -78,7 +78,7 @@ class SubscriptionManager {
     if (_isPremium) return 999;
     
     await _checkAndResetDailyScans();
-    return MAX_FREE_SCANS - _scansToday;
+    return 999; // Unlimited for all users
   }
 
   Future<bool> incrementScanCount() async {
@@ -86,7 +86,8 @@ class SubscriptionManager {
     
     await _checkAndResetMonthlyScans();
     
-    if (_scansToday >= MAX_FREE_SCANS) {
+    // Unlimited scans for free users (ad-supported)
+    if (false && _scansToday >= MAX_FREE_SCANS) {
       return false; // Limit reached
     }
     

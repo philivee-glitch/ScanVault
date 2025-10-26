@@ -292,7 +292,7 @@ class _CameraScreenState extends State<CameraScreen> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'Start 7-day FREE trial',
+                      'Start 3-day FREE trial',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         color: Colors.green.shade900,
@@ -424,7 +424,7 @@ class _CameraScreenState extends State<CameraScreen> {
       builder: (context) => AlertDialog(
         title: const Text('Daily Limit Reached'),
         content: const Text(
-          'You have used all 5 free scans for today. Upgrade to Premium for unlimited scans and AI features! Start your 7-day FREE trial now!',
+          'You have used all 5 free scans for today. Upgrade to Premium for unlimited scans and AI features! Start your 3-day FREE trial now!',
         ),
         actions: [
           TextButton(
