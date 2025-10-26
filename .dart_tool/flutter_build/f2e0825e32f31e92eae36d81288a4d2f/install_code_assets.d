@@ -1,1 +1,0 @@
- /Users/phillip/ScanVault/.dart_tool/flutter_build/f2e0825e32f31e92eae36d81288a4d2f/native_assets.json: 
