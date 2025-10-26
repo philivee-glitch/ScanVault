@@ -3,7 +3,7 @@ import 'package:camera/camera.dart';
 import 'package:cunning_document_scanner/cunning_document_scanner.dart';
 import 'dart:io';
 import '../subscription_manager.dart';
-import '../ad_manager.dart';
+// import '../ad_manager.dart';  // TODO: Re-enable with real ads
 import 'corner_adjustment_screen.dart';
 import 'enhancement_screen.dart';
 import 'settings_screen.dart';
@@ -16,7 +16,7 @@ class CameraScreen extends StatefulWidget {
 }
 
 class _CameraScreenState extends State<CameraScreen> {
-  final AdManager _adManager = AdManager();
+  //   final AdManager _adManager = AdManager();
   int _scanCountSinceLastAd = 0;
   final SubscriptionManager _subscriptionManager = SubscriptionManager();
   List<String> _scannedImages = [];
@@ -27,7 +27,7 @@ class _CameraScreenState extends State<CameraScreen> {
     super.initState();
     // Preload interstitial ad for free users
     if (!_subscriptionManager.isPremium) {
-      _adManager.loadInterstitialAd();
+      //       _adManager.loadInterstitialAd();
     }
   }
 
@@ -171,7 +171,7 @@ class _CameraScreenState extends State<CameraScreen> {
         if (!isPremium) {
           _scanCountSinceLastAd++;
           if (_scanCountSinceLastAd >= 3) {
-            _adManager.showInterstitialAd();
+            //             _adManager.showInterstitialAd();
             _scanCountSinceLastAd = 0;
           }
         }

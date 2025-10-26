@@ -11,3 +11,7 @@ android/key.properties
 .cxx
 local.properties
 *.iml
+build/
+.dart_tool/
+ios/Pods/
+ios/Podfile.lock
