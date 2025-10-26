@@ -113,16 +113,6 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
     }
   }
 
-  void _toggleSelectionMode() {
-    if (!_subscriptionManager.canUseBatchOperations() && !_isSelectionMode) {
-      _showPremiumFeatureDialog('Batch Operations');
-      return;
-    }
-    setState(() {
-      _isSelectionMode = !_isSelectionMode;
-      if (!_isSelectionMode) {
-        _selectedDocuments.clear();
-      }
     });
   }
 

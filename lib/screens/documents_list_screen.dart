@@ -41,7 +41,7 @@ class _DocumentsListScreenState extends State<DocumentsListScreen> {
         });
       }
     } catch (e) {
-      print('Error loading documents: $e');
+      debugPrint('Error loading documents: $e');
       setState(() {
         isLoading = false;
       });
