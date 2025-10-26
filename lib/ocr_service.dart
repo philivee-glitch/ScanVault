@@ -55,7 +55,7 @@ class OCRService {
       int blockCount = 0;
       
       for (TextBlock block in recognizedText.blocks) {
-        for (var _ in block.lines) {
+        for (TextLine line in block.lines) {
           // Note: ML Kit doesn't provide confidence scores
           // We're simulating this for the UI
           totalConfidence += 0.85; // Assume 85% confidence
