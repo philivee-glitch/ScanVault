@@ -6,8 +6,6 @@ workflows:
     environment:
       flutter: stable
       ios_signing:
-        distribution_type: app_store
-        bundle_identifier: com.scanvault.documentscanner.free
         provisioning_profiles:
           - SCANVAULT_FREE_PROFILE
       vars:
