@@ -1,4 +1,4 @@
-﻿import 'dart:io';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
@@ -15,10 +15,10 @@ class EnhancementScreen extends StatefulWidget {
   final List<String>? additionalPages;
 
   const EnhancementScreen({
-    Key? key,
+    super.key,
     required this.imagePath,
     this.additionalPages,
-  }) : super(key: key);
+  });
 
   @override
   State<EnhancementScreen> createState() => _EnhancementScreenState();
@@ -45,9 +45,9 @@ class _EnhancementScreenState extends State<EnhancementScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Enhance Document'),
+        title: const Text('Enhance Document'),
         leading: IconButton(
-          icon: Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -62,8 +62,8 @@ class _EnhancementScreenState extends State<EnhancementScreen> {
                     ? Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          CircularProgressIndicator(),
-                          SizedBox(height: 16),
+                          const CircularProgressIndicator(),
+                          const SizedBox(height: 16),
                           Text('Processing...', style: TextStyle(color: Colors.grey[600])),
                         ],
                       )
@@ -72,15 +72,15 @@ class _EnhancementScreenState extends State<EnhancementScreen> {
                             File(_processedImagePath!),
                             fit: BoxFit.contain,
                           )
-                        : Icon(Icons.image, size: 100, color: Colors.grey),
+                        : const Icon(Icons.image, size: 100, color: Colors.grey),
               ),
             ),
           ),
 
           // Controls
           Container(
-            padding: EdgeInsets.fromLTRB(16, 16, 16, 48),
-            decoration: BoxDecoration(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 48),
+            decoration: const BoxDecoration(
               color: Colors.white,
               boxShadow: [
                 BoxShadow(
@@ -95,17 +95,17 @@ class _EnhancementScreenState extends State<EnhancementScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Filters
-                Text('Filter', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                SizedBox(height: 8),
+                const Text('Filter', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                const SizedBox(height: 8),
                 SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   child: Row(
                     children: _filters.map((filter) {
                       final isSelected = _currentFilter == filter;
                       return Padding(
-                        padding: EdgeInsets.only(right: 8),
+                        padding: const EdgeInsets.only(right: 8),
                         child: ChoiceChip(
-                          label: Text(filter, style: TextStyle(fontSize: 13)),
+                          label: Text(filter, style: const TextStyle(fontSize: 13)),
                           selected: isSelected,
                           onSelected: (selected) {
                             if (selected) {
@@ -113,16 +113,16 @@ class _EnhancementScreenState extends State<EnhancementScreen> {
                               _applyEnhancements();
                             }
                           },
-                          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         ),
                       );
                     }).toList(),
                   ),
                 ),
                 
-                SizedBox(height: 12),
+                const SizedBox(height: 12),
 
-                SizedBox(height: 12),
+                const SizedBox(height: 12),
 
                 // Rotation
                 Row(
@@ -133,24 +133,24 @@ class _EnhancementScreenState extends State<EnhancementScreen> {
                           setState(() => _rotation = (_rotation - 90) % 360);
                           _applyEnhancements();
                         },
-                        icon: Icon(Icons.rotate_left, size: 18),
-                        label: Text('Left', style: TextStyle(fontSize: 13)),
+                        icon: const Icon(Icons.rotate_left, size: 18),
+                        label: const Text('Left', style: TextStyle(fontSize: 13)),
                         style: OutlinedButton.styleFrom(
-                          padding: EdgeInsets.symmetric(vertical: 8),
+                          padding: const EdgeInsets.symmetric(vertical: 8),
                         ),
                       ),
                     ),
-                    SizedBox(width: 8),
+                    const SizedBox(width: 8),
                     Expanded(
                       child: OutlinedButton.icon(
                         onPressed: () {
                           setState(() => _rotation = (_rotation + 90) % 360);
                           _applyEnhancements();
                         },
-                        icon: Icon(Icons.rotate_right, size: 18),
-                        label: Text('Right', style: TextStyle(fontSize: 13)),
+                        icon: const Icon(Icons.rotate_right, size: 18),
+                        label: const Text('Right', style: TextStyle(fontSize: 13)),
                         style: OutlinedButton.styleFrom(
-                          padding: EdgeInsets.symmetric(vertical: 8),
+                          padding: const EdgeInsets.symmetric(vertical: 8),
                         ),
                       ),
                     ),
@@ -158,7 +158,7 @@ class _EnhancementScreenState extends State<EnhancementScreen> {
                 ),
                 
 
-                SizedBox(height: 12),
+                const SizedBox(height: 12),
                 
                 // AI ANALYSIS BUTTON
                 SizedBox(
@@ -166,14 +166,14 @@ class _EnhancementScreenState extends State<EnhancementScreen> {
                   height: 50,
                   child: OutlinedButton.icon(
                     onPressed: _isProcessing ? null : _navigateToAIAnalysis,
-                    icon: Icon(Icons.smart_toy, size: 22),
-                    label: Text(
+                    icon: const Icon(Icons.smart_toy, size: 22),
+                    label: const Text(
                       'AI ANALYSIS',
                       style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                     ),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: Colors.blue,
-                      side: BorderSide(color: Colors.blue, width: 2),
+                      side: const BorderSide(color: Colors.blue, width: 2),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
@@ -181,7 +181,7 @@ class _EnhancementScreenState extends State<EnhancementScreen> {
                   ),
                 ),
                 
-                SizedBox(height: 12),
+                const SizedBox(height: 12),
                 
                 // SAVE BUTTON
                 SizedBox(
@@ -189,8 +189,8 @@ class _EnhancementScreenState extends State<EnhancementScreen> {
                   height: 50,
                   child: ElevatedButton.icon(
                     onPressed: _isProcessing ? null : _showSaveOptions,
-                    icon: Icon(Icons.save, size: 22),
-                    label: Text(
+                    icon: const Icon(Icons.save, size: 22),
+                    label: const Text(
                       'SAVE DOCUMENT',
                       style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                     ),
@@ -234,7 +234,7 @@ class _EnhancementScreenState extends State<EnhancementScreen> {
       
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+          const SnackBar(
             content: Text('Error applying enhancements'),
             backgroundColor: Colors.red,
           ),
@@ -329,7 +329,7 @@ class _EnhancementScreenState extends State<EnhancementScreen> {
   void _showPremiumDialog() {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => PremiumScreen()),
+      MaterialPageRoute(builder: (context) => const PremiumScreen()),
     );
   }
   Future<void> _showSaveOptions() async {
@@ -354,9 +354,9 @@ class _EnhancementScreenState extends State<EnhancementScreen> {
       builder: (context) => AlertDialog(
         title: Row(
           children: [
-            Expanded(child: Text('Save Document')),
+            const Expanded(child: Text('Save Document')),
             IconButton(
-              icon: Icon(Icons.close, size: 20),
+              icon: const Icon(Icons.close, size: 20),
               onPressed: () => Navigator.pop(context),
               tooltip: 'Cancel',
             ),
@@ -366,20 +366,20 @@ class _EnhancementScreenState extends State<EnhancementScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Choose where to save:'),
-            SizedBox(height: 16),
+            const Text('Choose where to save:'),
+            const SizedBox(height: 16),
             ListTile(
-              leading: Icon(Icons.folder_outlined, color: Colors.blue),
-              title: Text('Documents (Root)'),
+              leading: const Icon(Icons.folder_outlined, color: Colors.blue),
+              title: const Text('Documents (Root)'),
               onTap: () {
                 Navigator.pop(context);
                 _savePDF(null);
               },
             ),
             if (folders.isNotEmpty) ...[
-              Divider(),
+              const Divider(),
               ...folders.map((folder) => ListTile(
-                leading: Icon(Icons.folder, color: Colors.orange),
+                leading: const Icon(Icons.folder, color: Colors.orange),
                 title: Text(folder),
                 onTap: () {
                   Navigator.pop(context);
@@ -493,16 +493,16 @@ class _EnhancementScreenState extends State<EnhancementScreen> {
       builder: (context) => AlertDialog(
         title: Row(
           children: [
-            Icon(Icons.check_circle, color: Colors.green, size: 28),
-            SizedBox(width: 8),
-            Expanded(child: Text('PDF Saved!')),
+            const Icon(Icons.check_circle, color: Colors.green, size: 28),
+            const SizedBox(width: 8),
+            const Expanded(child: Text('PDF Saved!')),
             IconButton(
-              icon: Icon(Icons.close, size: 20),
+              icon: const Icon(Icons.close, size: 20),
               onPressed: () {
                 Navigator.pop(context);
                 Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(builder: (context) => DocumentsScreen()),
+                  MaterialPageRoute(builder: (context) => const DocumentsScreen()),
                 );
               },
               tooltip: 'Close',
@@ -513,29 +513,29 @@ class _EnhancementScreenState extends State<EnhancementScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Your document has been saved successfully.'),
+            const Text('Your document has been saved successfully.'),
             if (folderName != null) ...[
-              SizedBox(height: 8),
+              const SizedBox(height: 8),
               Container(
-                padding: EdgeInsets.all(8),
+                padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
                   color: Colors.orange.shade50,
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.folder, size: 16, color: Colors.orange),
-                    SizedBox(width: 8),
+                    const Icon(Icons.folder, size: 16, color: Colors.orange),
+                    const SizedBox(width: 8),
                     Text(
                       'Saved in: $folderName',
-                      style: TextStyle(fontSize: 12),
+                      style: const TextStyle(fontSize: 12),
                     ),
                   ],
                 ),
               ),
             ],
-            SizedBox(height: 16),
-            Text(
+            const SizedBox(height: 16),
+            const Text(
               'What would you like to do next?',
               style: TextStyle(fontWeight: FontWeight.w500),
             ),
@@ -547,10 +547,10 @@ class _EnhancementScreenState extends State<EnhancementScreen> {
               Navigator.pop(context);
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (context) => DocumentsScreen()),
+                MaterialPageRoute(builder: (context) => const DocumentsScreen()),
               );
             },
-            child: Text('Done'),
+            child: const Text('Done'),
           ),
           TextButton.icon(
             onPressed: () {
@@ -562,8 +562,8 @@ class _EnhancementScreenState extends State<EnhancementScreen> {
                 ),
               );
             },
-            icon: Icon(Icons.visibility),
-            label: Text('View PDF'),
+            icon: const Icon(Icons.visibility),
+            label: const Text('View PDF'),
           ),
         ],
       ),

@@ -1,5 +1,4 @@
-﻿import 'package:flutter/material.dart';
-import 'package:permission_handler/permission_handler.dart';
+import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:in_app_review/in_app_review.dart';
 import '../subscription_manager.dart';
@@ -12,7 +11,7 @@ import '../ad_manager.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({Key? key}) : super(key: key);
+  const HomeScreen({super.key});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -88,47 +87,47 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('ScanVault Premium'),
+        title: const Text('ScanVault Premium'),
         actions: [
           IconButton(
-            icon: Icon(Icons.settings),
+            icon: const Icon(Icons.settings),
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => SettingsScreen()),
+                MaterialPageRoute(builder: (context) => const SettingsScreen()),
               );
             },
           ),
         ],
       ),
       body: Padding(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // Status Card
             _buildStatusCard(),
-            SizedBox(height: 24),
+            const SizedBox(height: 24),
             
             // Scan Button
             Expanded(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(
+                  const Icon(
                     Icons.document_scanner,
                     size: 100,
                     color: Colors.blue,
                   ),
-                  SizedBox(height: 24),
-                  Text(
+                  const SizedBox(height: 24),
+                  const Text(
                     'Ready to Scan',
                     style: TextStyle(
                       fontSize: 28,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  SizedBox(height: 16),
+                  const SizedBox(height: 16),
                   Text(
                     'Tap the button below to start scanning documents',
                     textAlign: TextAlign.center,
@@ -137,31 +136,31 @@ class _HomeScreenState extends State<HomeScreen> {
                       color: Colors.grey[600],
                     ),
                   ),
-                  SizedBox(height: 32),
+                  const SizedBox(height: 32),
                   ElevatedButton.icon(
                     onPressed: _startScanning,
-                    icon: Icon(Icons.camera_alt, size: 28),
-                    label: Text(
+                    icon: const Icon(Icons.camera_alt, size: 28),
+                    label: const Text(
                       'Start Scanning',
                       style: TextStyle(fontSize: 18),
                     ),
                     style: ElevatedButton.styleFrom(
-                      padding: EdgeInsets.symmetric(horizontal: 48, vertical: 20),
+                      padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 20),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
                   ),
-                  SizedBox(height: 16),
+                  const SizedBox(height: 16),
                   TextButton.icon(
                     onPressed: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => DocumentsScreen()),
+                        MaterialPageRoute(builder: (context) => const DocumentsScreen()),
                       );
                     },
-                    icon: Icon(Icons.folder),
-                    label: Text('View Documents'),
+                    icon: const Icon(Icons.folder),
+                    label: const Text('View Documents'),
                   ),
                 ],
               ),
@@ -170,7 +169,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
         bottomNavigationBar: !_isPremium && _isBannerAdLoaded && _bannerAd != null
-            ? Container(
+            ? SizedBox(
                 height: _bannerAd!.size.height.toDouble(),
                 child: AdWidget(ad: _bannerAd!),
               )
@@ -183,16 +182,16 @@ class _HomeScreenState extends State<HomeScreen> {
       return Card(
         color: Colors.amber.shade50,
         child: Padding(
-          padding: EdgeInsets.all(16),
+          padding: const EdgeInsets.all(16),
           child: Row(
             children: [
-              Icon(Icons.workspace_premium, color: Colors.amber, size: 32),
-              SizedBox(width: 12),
+              const Icon(Icons.workspace_premium, color: Colors.amber, size: 32),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
+                    const Text(
                       'Premium Active',
                       style: TextStyle(
                         fontSize: 18,
@@ -226,17 +225,17 @@ class _HomeScreenState extends State<HomeScreen> {
       return Card(
         color: Colors.blue.shade50,
         child: Padding(
-          padding: EdgeInsets.all(16),
+          padding: const EdgeInsets.all(16),
           child: Column(
             children: [
               Row(
                 children: [
-                  Icon(Icons.info_outline, color: Colors.blue),
-                  SizedBox(width: 12),
+                  const Icon(Icons.info_outline, color: Colors.blue),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Text(
                       '$_remainingScans scans remaining this month',
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                       ),
@@ -244,13 +243,13 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ],
               ),
-              SizedBox(height: 12),
+              const SizedBox(height: 12),
               ElevatedButton.icon(
                 onPressed: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => PremiumScreen()));
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => const PremiumScreen()));
                 },
-                icon: Icon(Icons.upgrade, size: 20),
-                label: Text('Upgrade to Premium'),
+                icon: const Icon(Icons.upgrade, size: 20),
+                label: const Text('Upgrade to Premium'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.blue,
                   foregroundColor: Colors.white,
@@ -269,7 +268,7 @@ class _HomeScreenState extends State<HomeScreen> {
     
     if (!canScan) {
       // Show upgrade dialog
-      Navigator.push(context, MaterialPageRoute(builder: (context) => PremiumScreen()));
+      Navigator.push(context, MaterialPageRoute(builder: (context) => const PremiumScreen()));
       return;
     }
 
@@ -280,7 +279,7 @@ class _HomeScreenState extends State<HomeScreen> {
     if (!hasPermission) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+          const SnackBar(
             content: Text('Camera permission is required to scan documents'),
             backgroundColor: Colors.red,
           ),
@@ -293,7 +292,7 @@ class _HomeScreenState extends State<HomeScreen> {
     if (mounted) {
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => CameraScreen()),
+        MaterialPageRoute(builder: (context) => const CameraScreen()),
       ).then((_) async {
         // Reload status when returning from camera
         await _loadUserStatus();

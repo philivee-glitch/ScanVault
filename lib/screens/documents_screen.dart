@@ -1,10 +1,8 @@
-﻿import 'dart:io';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:open_file/open_file.dart';
 import 'package:share_plus/share_plus.dart';
 import 'pdf_preview_screen.dart';
-import 'document_analysis_screen.dart';
 import '../subscription_manager.dart';
 
 class Document {
@@ -24,7 +22,7 @@ class Document {
 }
 
 class DocumentsScreen extends StatefulWidget {
-  const DocumentsScreen({Key? key}) : super(key: key);
+  const DocumentsScreen({super.key});
 
   @override
   State<DocumentsScreen> createState() => _DocumentsScreenState();
@@ -132,7 +130,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Row(
+        title: const Row(
           children: [
             Icon(Icons.star, color: Colors.amber),
             SizedBox(width: 8),
@@ -145,20 +143,20 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Maybe Later'),
+            child: const Text('Maybe Later'),
           ),
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Premium purchase coming soon!')),
+                const SnackBar(content: Text('Premium purchase coming soon!')),
               );
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.amber,
               foregroundColor: Colors.black,
             ),
-            child: Text('Upgrade Now'),
+            child: const Text('Upgrade Now'),
           ),
         ],
       ),
@@ -202,12 +200,12 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
             : _selectedFolder ?? 'Documents'),
         leading: _isSelectionMode
             ? IconButton(
-                icon: Icon(Icons.close),
+                icon: const Icon(Icons.close),
                 onPressed: _deselectAll,
               )
             : _selectedFolder != null
                 ? IconButton(
-                    icon: Icon(Icons.arrow_back),
+                    icon: const Icon(Icons.arrow_back),
                     onPressed: () {
                       setState(() => _selectedFolder = null);
                       _loadDocuments();
@@ -218,25 +216,25 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
             ? [
                 if (_selectedDocuments.length < _documents.length)
                   IconButton(
-                    icon: Icon(Icons.select_all),
+                    icon: const Icon(Icons.select_all),
                     onPressed: _selectAll,
                     tooltip: 'Select All',
                   ),
                 if (_selectedFolder == null)
                   IconButton(
-                    icon: Icon(Icons.drive_file_move),
+                    icon: const Icon(Icons.drive_file_move),
                     onPressed: _showBatchMoveDialog,
                     tooltip: 'Move to Folder',
                   ),
                 IconButton(
-                  icon: Icon(Icons.delete),
+                  icon: const Icon(Icons.delete),
                   onPressed: _showBatchDeleteDialog,
                   tooltip: 'Delete',
                 ),
               ]
             : [
                 IconButton(
-                  icon: Icon(Icons.search),
+                  icon: const Icon(Icons.search),
                   onPressed: () {
                     showSearch(
                       context: context,
@@ -247,7 +245,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
               ],
       ),
       body: _isLoading
-          ? Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator())
           : _buildBody(),
       floatingActionButton: _isSelectionMode
           ? null
@@ -258,16 +256,16 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
                   FloatingActionButton(
                     heroTag: 'create_folder',
                     onPressed: _showCreateFolderDialog,
-                    child: Icon(Icons.create_new_folder),
                     mini: true,
                     backgroundColor: Colors.orange,
+                    child: const Icon(Icons.create_new_folder),
                   ),
-                SizedBox(height: 8),
+                const SizedBox(height: 8),
                 FloatingActionButton(
                   heroTag: 'scan',
                   onPressed: () => Navigator.pop(context),
-                  child: Icon(Icons.add),
                   backgroundColor: Colors.blue,
+                  child: const Icon(Icons.add),
                 ),
               ],
             ),
@@ -276,7 +274,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
 
   Widget _buildBody() {
     if (_selectedFolder == null && _folders.isEmpty && _documents.isEmpty) {
-      return Center(
+      return const Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -299,11 +297,11 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
     return RefreshIndicator(
       onRefresh: _loadDocuments,
       child: ListView(
-        padding: EdgeInsets.all(8),
+        padding: const EdgeInsets.all(8),
         children: [
           if (_selectedFolder == null && _folders.isNotEmpty) ...[
             Padding(
-              padding: EdgeInsets.all(8),
+              padding: const EdgeInsets.all(8),
               child: Text(
                 'Folders',
                 style: TextStyle(
@@ -315,31 +313,31 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
             ),
             ..._folders.map((folder) => Card(
               child: ListTile(
-                leading: Icon(Icons.folder, color: Colors.orange, size: 32),
-                title: Text(folder, style: TextStyle(fontWeight: FontWeight.w500)),
+                leading: const Icon(Icons.folder, color: Colors.orange, size: 32),
+                title: Text(folder, style: const TextStyle(fontWeight: FontWeight.w500)),
                 trailing: PopupMenuButton(
-                  icon: Icon(Icons.more_vert),
+                  icon: const Icon(Icons.more_vert),
                   itemBuilder: (context) => [
                     PopupMenuItem(
-                      child: ListTile(
+                      child: const ListTile(
                         leading: Icon(Icons.edit, size: 20),
                         title: Text('Rename'),
                         contentPadding: EdgeInsets.zero,
                       ),
                       onTap: () {
-                        Future.delayed(Duration(milliseconds: 100), () {
+                        Future.delayed(const Duration(milliseconds: 100), () {
                           _showRenameFolderDialog(folder);
                         });
                       },
                     ),
                     PopupMenuItem(
-                      child: ListTile(
+                      child: const ListTile(
                         leading: Icon(Icons.delete, size: 20, color: Colors.red),
                         title: Text('Delete', style: TextStyle(color: Colors.red)),
                         contentPadding: EdgeInsets.zero,
                       ),
                       onTap: () {
-                        Future.delayed(Duration(milliseconds: 100), () {
+                        Future.delayed(const Duration(milliseconds: 100), () {
                           _deleteFolder(folder);
                         });
                       },
@@ -352,12 +350,12 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
                 },
               ),
             )),
-            SizedBox(height: 16),
-            Divider(),
+            const SizedBox(height: 16),
+            const Divider(),
           ],
           if (_documents.isNotEmpty) ...[
             Padding(
-              padding: EdgeInsets.all(8),
+              padding: const EdgeInsets.all(8),
               child: Text(
                 _selectedFolder == null ? 'Recent Documents' : 'Documents',
                 style: TextStyle(
@@ -374,22 +372,22 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
                         value: _selectedDocuments.contains(doc.path),
                         onChanged: (value) => _toggleDocumentSelection(doc.path),
                       )
-                    : Icon(Icons.picture_as_pdf, color: Colors.red, size: 32),
+                    : const Icon(Icons.picture_as_pdf, color: Colors.red, size: 32),
                 title: Text(doc.name),
                 subtitle: Text('${_formatDate(doc.date)} | ${_formatSize(doc.size)}'),
                 trailing: _isSelectionMode
                     ? null
                     : PopupMenuButton(
-                        icon: Icon(Icons.more_vert),
+                        icon: const Icon(Icons.more_vert),
                         itemBuilder: (context) => [
                           PopupMenuItem(
-                            child: ListTile(
+                            child: const ListTile(
                               leading: Icon(Icons.visibility, size: 20),
                               title: Text('View'),
                               contentPadding: EdgeInsets.zero,
                             ),
                             onTap: () {
-                              Future.delayed(Duration(milliseconds: 100), () {
+                              Future.delayed(const Duration(milliseconds: 100), () {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
@@ -400,63 +398,63 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
                             },
                           ),
                           PopupMenuItem(
-                            child: ListTile(
+                            child: const ListTile(
                               leading: Icon(Icons.smart_toy, size: 20, color: Colors.blue),
                               title: Text('AI Analysis'),
                               contentPadding: EdgeInsets.zero,
                             ),
                             onTap: () {
-                              Future.delayed(Duration(milliseconds: 100), () {
+                              Future.delayed(const Duration(milliseconds: 100), () {
                                 _showAIAnalysisOption(doc);
                               });
                             },
                           ),
                           PopupMenuItem(
-                            child: ListTile(
+                            child: const ListTile(
                               leading: Icon(Icons.edit, size: 20),
                               title: Text('Rename'),
                               contentPadding: EdgeInsets.zero,
                             ),
 
                             onTap: () {
-                              Future.delayed(Duration(milliseconds: 100), () {
+                              Future.delayed(const Duration(milliseconds: 100), () {
                                 _showRenameDocumentDialog(doc);
                               });
                             },
                           ),
                           PopupMenuItem(
-                            child: ListTile(
+                            child: const ListTile(
                               leading: Icon(Icons.share, size: 20),
                               title: Text('Share'),
                               contentPadding: EdgeInsets.zero,
                             ),
                             onTap: () {
-                              Future.delayed(Duration(milliseconds: 100), () {
+                              Future.delayed(const Duration(milliseconds: 100), () {
                                 Share.shareXFiles([XFile(doc.path)]);
                               });
                             },
                           ),
                           if (_selectedFolder == null)
                             PopupMenuItem(
-                              child: ListTile(
+                              child: const ListTile(
                                 leading: Icon(Icons.drive_file_move, size: 20),
                                 title: Text('Move to Folder'),
                                 contentPadding: EdgeInsets.zero,
                               ),
                               onTap: () {
-                                Future.delayed(Duration(milliseconds: 100), () {
+                                Future.delayed(const Duration(milliseconds: 100), () {
                                   _showMoveToFolderDialog(doc);
                                 });
                               },
                             ),
                           PopupMenuItem(
-                            child: ListTile(
+                            child: const ListTile(
                               leading: Icon(Icons.delete, size: 20, color: Colors.red),
                               title: Text('Delete', style: TextStyle(color: Colors.red)),
                               contentPadding: EdgeInsets.zero,
                             ),
                             onTap: () {
-                              Future.delayed(Duration(milliseconds: 100), () {
+                              Future.delayed(const Duration(milliseconds: 100), () {
                                 _deleteDocument(doc);
                               });
                             },
@@ -484,7 +482,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
               ),
             )),
           ] else if (_selectedFolder != null) ...[
-            Center(
+            const Center(
               child: Padding(
                 padding: EdgeInsets.all(32),
                 child: Column(
@@ -508,7 +506,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
   void _showBatchMoveDialog() {
     if (_folders.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('No folders available. Create a folder first.')),
+        const SnackBar(content: Text('No folders available. Create a folder first.')),
       );
       return;
     }
@@ -521,7 +519,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
           mainAxisSize: MainAxisSize.min,
           children: _folders.map((folder) {
             return ListTile(
-              leading: Icon(Icons.folder),
+              leading: const Icon(Icons.folder),
               title: Text(folder),
               onTap: () async {
                 await _batchMoveToFolder(folder);
@@ -533,7 +531,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Cancel'),
+            child: const Text('Cancel'),
           ),
         ],
       ),
@@ -564,7 +562,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
     } catch (e) {
       debugPrint('Batch move error: $e');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error moving documents')),
+        const SnackBar(content: Text('Error moving documents')),
       );
     }
   }
@@ -573,12 +571,12 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Delete Documents'),
+        title: const Text('Delete Documents'),
         content: Text('Delete ${_selectedDocuments.length} selected documents?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Cancel'),
+            child: const Text('Cancel'),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -586,7 +584,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
               Navigator.pop(context);
             },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: Text('Delete'),
+            child: const Text('Delete'),
           ),
         ],
       ),
@@ -607,12 +605,12 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
       await _loadDocuments();
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Documents deleted')),
+        const SnackBar(content: Text('Documents deleted')),
       );
     } catch (e) {
       debugPrint('Batch delete error: $e');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error deleting documents')),
+        const SnackBar(content: Text('Error deleting documents')),
       );
     }
   }
@@ -627,10 +625,10 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Create Folder'),
+        title: const Text('Create Folder'),
         content: TextField(
           controller: controller,
-          decoration: InputDecoration(
+          decoration: const InputDecoration(
             labelText: 'Folder Name',
             hintText: 'Enter folder name',
           ),
@@ -639,7 +637,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Cancel'),
+            child: const Text('Cancel'),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -649,7 +647,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
                 Navigator.pop(context);
               }
             },
-            child: Text('Create'),
+            child: const Text('Create'),
           ),
         ],
       ),
@@ -677,7 +675,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
     } catch (e) {
       debugPrint('Create folder error: $e');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error creating folder')),
+        const SnackBar(content: Text('Error creating folder')),
       );
     }
   }
@@ -687,16 +685,16 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Rename Folder'),
+        title: const Text('Rename Folder'),
         content: TextField(
           controller: controller,
-          decoration: InputDecoration(labelText: 'New Name'),
+          decoration: const InputDecoration(labelText: 'New Name'),
           autofocus: true,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Cancel'),
+            child: const Text('Cancel'),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -706,7 +704,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
                 Navigator.pop(context);
               }
             },
-            child: Text('Rename'),
+            child: const Text('Rename'),
           ),
         ],
       ),
@@ -735,7 +733,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
     } catch (e) {
       debugPrint('Rename folder error: $e');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error renaming folder')),
+        const SnackBar(content: Text('Error renaming folder')),
       );
     }
   }
@@ -747,10 +745,10 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Rename Document'),
+        title: const Text('Rename Document'),
         content: TextField(
           controller: controller,
-          decoration: InputDecoration(
+          decoration: const InputDecoration(
             labelText: 'New Name',
             suffixText: '.pdf',
           ),
@@ -759,7 +757,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Cancel'),
+            child: const Text('Cancel'),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -769,7 +767,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
                 Navigator.pop(context);
               }
             },
-            child: Text('Rename'),
+            child: const Text('Rename'),
           ),
         ],
       ),
@@ -798,7 +796,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
     } catch (e) {
       debugPrint('Rename document error: $e');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error renaming document')),
+        const SnackBar(content: Text('Error renaming document')),
       );
     }
   }
@@ -807,17 +805,17 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Delete Folder'),
+        title: const Text('Delete Folder'),
         content: Text('Delete "$folderName" and all its contents?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: Text('Cancel'),
+            child: const Text('Cancel'),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: Text('Delete'),
+            child: const Text('Delete'),
           ),
         ],
       ),
@@ -831,12 +829,12 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
         await _loadDocuments();
 
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Folder deleted')),
+          const SnackBar(content: Text('Folder deleted')),
         );
       } catch (e) {
         debugPrint('Delete folder error: $e');
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error deleting folder')),
+          const SnackBar(content: Text('Error deleting folder')),
         );
       }
     }
@@ -846,12 +844,12 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Move to Folder'),
+        title: const Text('Move to Folder'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: _folders.map((folder) {
             return ListTile(
-              leading: Icon(Icons.folder),
+              leading: const Icon(Icons.folder),
               title: Text(folder),
               onTap: () async {
                 await _moveToFolder(doc, folder);
@@ -863,7 +861,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Cancel'),
+            child: const Text('Cancel'),
           ),
         ],
       ),
@@ -883,7 +881,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
     } catch (e) {
       debugPrint('Move document error: $e');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error moving document')),
+        const SnackBar(content: Text('Error moving document')),
       );
     }
   }
@@ -892,17 +890,17 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Delete Document'),
+        title: const Text('Delete Document'),
         content: Text('Delete "${doc.name}"?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: Text('Cancel'),
+            child: const Text('Cancel'),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: Text('Delete'),
+            child: const Text('Delete'),
           ),
         ],
       ),
@@ -914,12 +912,12 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
         await _loadDocuments();
 
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Document deleted')),
+          const SnackBar(content: Text('Document deleted')),
         );
       } catch (e) {
         debugPrint('Delete document error: $e');
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error deleting document')),
+          const SnackBar(content: Text('Error deleting document')),
         );
       }
     }
@@ -932,14 +930,14 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Row(
+        title: const Row(
           children: [
             Icon(Icons.smart_toy, color: Colors.blue),
             SizedBox(width: 8),
             Text('AI Analysis'),
           ],
         ),
-        content: Text(
+        content: const Text(
           'AI Analysis works best with the original scanned image.\n\n'
           'To analyze this document:\n'
           '1. Scan a new document\n'
@@ -949,14 +947,14 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Cancel'),
+            child: const Text('Cancel'),
           ),
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
               Navigator.pop(context); // Go back to scan
             },
-            child: Text('Scan New Document'),
+            child: const Text('Scan New Document'),
           ),
         ],
       ),
@@ -993,7 +991,7 @@ class DocumentSearchDelegate extends SearchDelegate<Document?> {
   List<Widget> buildActions(BuildContext context) {
     return [
       IconButton(
-        icon: Icon(Icons.clear),
+        icon: const Icon(Icons.clear),
         onPressed: () => query = '',
       ),
     ];
@@ -1002,7 +1000,7 @@ class DocumentSearchDelegate extends SearchDelegate<Document?> {
   @override
   Widget buildLeading(BuildContext context) {
     return IconButton(
-      icon: Icon(Icons.arrow_back),
+      icon: const Icon(Icons.arrow_back),
       onPressed: () => close(context, null),
     );
   }
@@ -1023,7 +1021,7 @@ class DocumentSearchDelegate extends SearchDelegate<Document?> {
       itemBuilder: (context, index) {
         final doc = results[index];
         return ListTile(
-          leading: Icon(Icons.picture_as_pdf, color: Colors.red),
+          leading: const Icon(Icons.picture_as_pdf, color: Colors.red),
           title: Text(doc.name),
           onTap: () {
             Navigator.push(

@@ -1,16 +1,13 @@
-﻿import 'package:flutter/material.dart';
-import 'package:camera/camera.dart';
+import 'package:flutter/material.dart';
 import 'package:cunning_document_scanner/cunning_document_scanner.dart';
-import 'dart:io';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../subscription_manager.dart';
 import '../ad_manager.dart';
 import 'corner_adjustment_screen.dart';
 import 'enhancement_screen.dart';
-import 'settings_screen.dart';
 
 class CameraScreen extends StatefulWidget {
-  const CameraScreen({Key? key}) : super(key: key);
+  const CameraScreen({super.key});
 
   @override
   State<CameraScreen> createState() => _CameraScreenState();
@@ -20,7 +17,7 @@ class _CameraScreenState extends State<CameraScreen> {
   final AdManager _adManager = AdManager();
   int _scanCountSinceLastAd = 0;
   final SubscriptionManager _subscriptionManager = SubscriptionManager();
-  List<String> _scannedImages = [];
+  final List<String> _scannedImages = [];
   bool _isScanning = false;
 
   @override
@@ -51,15 +48,15 @@ class _CameraScreenState extends State<CameraScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Scan Document'),
+        title: const Text('Scan Document'),
         actions: [
           if (_scannedImages.isNotEmpty)
             TextButton.icon(
               onPressed: _finishScanning,
-              icon: Icon(Icons.check, color: Colors.white),
+              icon: const Icon(Icons.check, color: Colors.white),
               label: Text(
                 'Done (${_scannedImages.length})',
-                style: TextStyle(color: Colors.white),
+                style: const TextStyle(color: Colors.white),
               ),
             ),
         ],
@@ -68,22 +65,22 @@ class _CameraScreenState extends State<CameraScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
+            const Icon(
               Icons.document_scanner,
               size: 100,
               color: Colors.blue,
             ),
-            SizedBox(height: 24),
+            const SizedBox(height: 24),
             Text(
               _scannedImages.isEmpty
                   ? 'Ready to Scan'
                   : '${_scannedImages.length} page(s) scanned',
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
               ),
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             Text(
               'Position your document and tap the button',
               textAlign: TextAlign.center,
@@ -92,25 +89,25 @@ class _CameraScreenState extends State<CameraScreen> {
                 color: Colors.grey[600],
               ),
             ),
-            SizedBox(height: 32),
+            const SizedBox(height: 32),
             ElevatedButton.icon(
               onPressed: _isScanning ? null : _scanDocument,
-              icon: Icon(Icons.camera_alt, size: 28),
+              icon: const Icon(Icons.camera_alt, size: 28),
               label: Text(
                 _scannedImages.isEmpty ? 'Start Scanning' : 'Add Another Page',
-                style: TextStyle(fontSize: 18),
+                style: const TextStyle(fontSize: 18),
               ),
               style: ElevatedButton.styleFrom(
-                padding: EdgeInsets.symmetric(horizontal: 48, vertical: 20),
+                padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 20),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
             ),
             if (_scannedImages.isNotEmpty && !isPremium) ...[
-              SizedBox(height: 8),
+              const SizedBox(height: 8),
               Container(
-                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
                   color: Colors.amber.shade50,
                   borderRadius: BorderRadius.circular(12),
@@ -120,7 +117,7 @@ class _CameraScreenState extends State<CameraScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(Icons.workspace_premium, size: 16, color: Colors.amber.shade700),
-                    SizedBox(width: 4),
+                    const SizedBox(width: 4),
                     Text(
                       'Multi-page scanning requires Premium',
                       style: TextStyle(
@@ -134,11 +131,11 @@ class _CameraScreenState extends State<CameraScreen> {
               ),
             ],
             if (_scannedImages.isNotEmpty) ...[
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               OutlinedButton.icon(
                 onPressed: _finishScanning,
-                icon: Icon(Icons.check),
-                label: Text('Finish & Process'),
+                icon: const Icon(Icons.check),
+                label: const Text('Finish & Process'),
               ),
             ],
           ],
@@ -201,7 +198,7 @@ class _CameraScreenState extends State<CameraScreen> {
                 '✓ Page ${_scannedImages.length} captured${!isPremium ? ' • $remaining scans left this month' : ''}',
               ),
               backgroundColor: Colors.green,
-              duration: Duration(seconds: 2),
+              duration: const Duration(seconds: 2),
             ),
           );
         }
@@ -210,7 +207,7 @@ class _CameraScreenState extends State<CameraScreen> {
       debugPrint('Scan error: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+          const SnackBar(
             content: Text('Failed to scan document'),
             backgroundColor: Colors.red,
           ),
@@ -256,7 +253,7 @@ class _CameraScreenState extends State<CameraScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Row(
+        title: const Row(
           children: [
             Icon(Icons.workspace_premium, color: Colors.amber),
             SizedBox(width: 8),
@@ -267,23 +264,23 @@ class _CameraScreenState extends State<CameraScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
+            const Text(
               'You scanned multiple pages, but only the first page will be saved in the free version.',
               style: TextStyle(fontSize: 16),
             ),
-            SizedBox(height: 16),
-            Text(
+            const SizedBox(height: 16),
+            const Text(
               'Upgrade to Premium to unlock:',
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
             _buildFeature('Unlimited multi-page scanning'),
             _buildFeature('AI-powered enhancement'),
             _buildFeature('OCR text recognition'),
             _buildFeature('Cloud backup'),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             Container(
-              padding: EdgeInsets.all(12),
+              padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: Colors.green.shade50,
                 borderRadius: BorderRadius.circular(8),
@@ -291,8 +288,8 @@ class _CameraScreenState extends State<CameraScreen> {
               ),
               child: Row(
                 children: [
-                  Icon(Icons.celebration, color: Colors.green),
-                  SizedBox(width: 8),
+                  const Icon(Icons.celebration, color: Colors.green),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       'Start 7-day FREE trial',
@@ -310,20 +307,20 @@ class _CameraScreenState extends State<CameraScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Continue with First Page'),
+            child: const Text('Continue with First Page'),
           ),
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Upgrade to Premium for multi-page scans!')),
+                const SnackBar(content: Text('Upgrade to Premium for multi-page scans!')),
               );
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.blue,
               foregroundColor: Colors.white,
             ),
-            child: Text('Start Free Trial'),
+            child: const Text('Start Free Trial'),
           ),
         ],
       ),
@@ -334,7 +331,7 @@ class _CameraScreenState extends State<CameraScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Row(
+        title: const Row(
           children: [
             Icon(Icons.workspace_premium, color: Colors.amber),
             SizedBox(width: 8),
@@ -345,23 +342,23 @@ class _CameraScreenState extends State<CameraScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
+            const Text(
               'Multi-page scanning is a Premium feature.',
               style: TextStyle(fontSize: 16),
             ),
-            SizedBox(height: 16),
-            Text(
+            const SizedBox(height: 16),
+            const Text(
               'Upgrade to Premium to unlock:',
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
             _buildFeature('Unlimited multi-page scanning'),
             _buildFeature('AI-powered enhancement'),
             _buildFeature('OCR text recognition'),
             _buildFeature('Cloud backup'),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             Container(
-              padding: EdgeInsets.all(12),
+              padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: Colors.green.shade50,
                 borderRadius: BorderRadius.circular(8),
@@ -369,8 +366,8 @@ class _CameraScreenState extends State<CameraScreen> {
               ),
               child: Row(
                 children: [
-                  Icon(Icons.celebration, color: Colors.green),
-                  SizedBox(width: 8),
+                  const Icon(Icons.celebration, color: Colors.green),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       'Upgrade to Premium',
@@ -388,20 +385,20 @@ class _CameraScreenState extends State<CameraScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Continue with Single Page'),
+            child: const Text('Continue with Single Page'),
           ),
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Upgrade to Premium for unlimited scans!')),
+                const SnackBar(content: Text('Upgrade to Premium for unlimited scans!')),
               );
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.blue,
               foregroundColor: Colors.white,
             ),
-            child: Text('Start Free Trial'),
+            child: const Text('Start Free Trial'),
           ),
         ],
       ),
@@ -410,11 +407,11 @@ class _CameraScreenState extends State<CameraScreen> {
 
   Widget _buildFeature(String text) {
     return Padding(
-      padding: EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         children: [
-          Icon(Icons.check_circle, color: Colors.green, size: 20),
-          SizedBox(width: 8),
+          const Icon(Icons.check_circle, color: Colors.green, size: 20),
+          const SizedBox(width: 8),
           Expanded(child: Text(text)),
         ],
       ),
@@ -425,27 +422,27 @@ class _CameraScreenState extends State<CameraScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Daily Limit Reached'),
-        content: Text(
+        title: const Text('Daily Limit Reached'),
+        content: const Text(
           'You have used all 5 free scans for today. Upgrade to Premium for unlimited scans and AI features! Start your 7-day FREE trial now!',
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Later'),
+            child: const Text('Later'),
           ),
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Upgrade to Premium for unlimited scans!')),
+                const SnackBar(content: Text('Upgrade to Premium for unlimited scans!')),
               );
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.blue,
               foregroundColor: Colors.white,
             ),
-            child: Text('Start Free Trial'),
+            child: const Text('Start Free Trial'),
           ),
         ],
       ),

@@ -14,6 +14,7 @@
         "flutter_pdfview",
         "google_mlkit_text_recognition",
         "google_mobile_ads",
+        "http",
         "image",
         "image_picker",
         "in_app_purchase",
@@ -23,6 +24,7 @@
         "path_provider",
         "pdf",
         "permission_handler",
+        "printing",
         "share_plus",
         "shared_preferences",
         "url_launcher"
@@ -55,6 +57,16 @@
         "stream_channel",
         "test_api",
         "vector_math"
+      ]
+    },
+    {
+      "name": "http",
+      "version": "1.5.0",
+      "dependencies": [
+        "async",
+        "http_parser",
+        "meta",
+        "web"
       ]
     },
     {
@@ -151,7 +163,7 @@
     },
     {
       "name": "google_mlkit_text_recognition",
-      "version": "0.11.0",
+      "version": "0.15.0",
       "dependencies": [
         "flutter",
         "google_mlkit_commons"
@@ -370,16 +382,34 @@
       ]
     },
     {
-      "name": "win32",
-      "version": "5.14.0",
-      "dependencies": [
-        "ffi"
-      ]
-    },
-    {
       "name": "web",
       "version": "1.1.1",
       "dependencies": []
+    },
+    {
+      "name": "http_parser",
+      "version": "4.1.2",
+      "dependencies": [
+        "collection",
+        "source_span",
+        "string_scanner",
+        "typed_data"
+      ]
+    },
+    {
+      "name": "async",
+      "version": "2.13.0",
+      "dependencies": [
+        "collection",
+        "meta"
+      ]
+    },
+    {
+      "name": "win32",
+      "version": "5.15.0",
+      "dependencies": [
+        "ffi"
+      ]
     },
     {
       "name": "package_info_plus_platform_interface",
@@ -388,16 +418,6 @@
         "flutter",
         "meta",
         "plugin_platform_interface"
-      ]
-    },
-    {
-      "name": "http",
-      "version": "1.5.0",
-      "dependencies": [
-        "async",
-        "http_parser",
-        "meta",
-        "web"
       ]
     },
     {
@@ -514,7 +534,7 @@
     },
     {
       "name": "in_app_purchase_android",
-      "version": "0.4.0+5",
+      "version": "0.4.0+6",
       "dependencies": [
         "collection",
         "flutter",
@@ -549,7 +569,7 @@
     },
     {
       "name": "url_launcher_macos",
-      "version": "3.2.3",
+      "version": "3.2.4",
       "dependencies": [
         "flutter",
         "url_launcher_platform_interface"
@@ -565,7 +585,7 @@
     },
     {
       "name": "url_launcher_ios",
-      "version": "6.3.4",
+      "version": "6.3.5",
       "dependencies": [
         "flutter",
         "url_launcher_platform_interface"
@@ -615,7 +635,7 @@
     },
     {
       "name": "google_mlkit_commons",
-      "version": "0.6.1",
+      "version": "0.11.0",
       "dependencies": [
         "flutter"
       ]
@@ -724,7 +744,7 @@
     },
     {
       "name": "shared_preferences_foundation",
-      "version": "2.5.4",
+      "version": "2.5.5",
       "dependencies": [
         "flutter",
         "shared_preferences_platform_interface"
@@ -770,7 +790,7 @@
     },
     {
       "name": "path_provider_foundation",
-      "version": "2.4.2",
+      "version": "2.4.3",
       "dependencies": [
         "flutter",
         "path_provider_platform_interface"
@@ -778,7 +798,7 @@
     },
     {
       "name": "path_provider_android",
-      "version": "2.2.18",
+      "version": "2.2.20",
       "dependencies": [
         "flutter",
         "path_provider_platform_interface"
@@ -849,7 +869,7 @@
     },
     {
       "name": "image_picker_platform_interface",
-      "version": "2.11.0",
+      "version": "2.11.1",
       "dependencies": [
         "cross_file",
         "flutter",
@@ -859,7 +879,7 @@
     },
     {
       "name": "image_picker_macos",
-      "version": "0.2.2",
+      "version": "0.2.2+1",
       "dependencies": [
         "file_selector_macos",
         "file_selector_platform_interface",
@@ -879,7 +899,7 @@
     },
     {
       "name": "image_picker_ios",
-      "version": "0.8.13",
+      "version": "0.8.13+1",
       "dependencies": [
         "flutter",
         "image_picker_platform_interface"
@@ -907,7 +927,7 @@
     },
     {
       "name": "flutter_plugin_android_lifecycle",
-      "version": "2.0.30",
+      "version": "2.0.32",
       "dependencies": [
         "flutter"
       ]
@@ -935,7 +955,7 @@
     },
     {
       "name": "camera_avfoundation",
-      "version": "0.9.21+4",
+      "version": "0.9.22+4",
       "dependencies": [
         "camera_platform_interface",
         "flutter",
@@ -944,7 +964,7 @@
     },
     {
       "name": "camera_android",
-      "version": "0.10.10+10",
+      "version": "0.10.10+11",
       "dependencies": [
         "camera_platform_interface",
         "flutter",
@@ -968,14 +988,6 @@
       "name": "characters",
       "version": "1.4.0",
       "dependencies": []
-    },
-    {
-      "name": "async",
-      "version": "2.13.0",
-      "dependencies": [
-        "collection",
-        "meta"
-      ]
     },
     {
       "name": "leak_tracker_testing",
@@ -1027,13 +1039,10 @@
       ]
     },
     {
-      "name": "http_parser",
-      "version": "4.1.2",
+      "name": "typed_data",
+      "version": "1.4.0",
       "dependencies": [
-        "collection",
-        "source_span",
-        "string_scanner",
-        "typed_data"
+        "collection"
       ]
     },
     {
@@ -1084,13 +1093,6 @@
       ]
     },
     {
-      "name": "typed_data",
-      "version": "1.4.0",
-      "dependencies": [
-        "collection"
-      ]
-    },
-    {
       "name": "qr",
       "version": "3.0.2",
       "dependencies": [
@@ -1127,7 +1129,7 @@
     },
     {
       "name": "file_selector_macos",
-      "version": "0.9.4+4",
+      "version": "0.9.4+5",
       "dependencies": [
         "cross_file",
         "file_selector_platform_interface",
@@ -1162,6 +1164,30 @@
       "name": "sprintf",
       "version": "7.0.0",
       "dependencies": []
+    },
+    {
+      "name": "printing",
+      "version": "5.14.2",
+      "dependencies": [
+        "ffi",
+        "flutter",
+        "flutter_web_plugins",
+        "http",
+        "image",
+        "meta",
+        "pdf",
+        "pdf_widget_wrapper",
+        "plugin_platform_interface",
+        "web"
+      ]
+    },
+    {
+      "name": "pdf_widget_wrapper",
+      "version": "1.0.4",
+      "dependencies": [
+        "flutter",
+        "pdf"
+      ]
     }
   ],
   "configVersion": 1

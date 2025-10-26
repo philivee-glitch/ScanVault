@@ -7,7 +7,7 @@ import 'documents_screen.dart';
 class PdfPreviewScreen extends StatefulWidget {
   final String pdfPath;
 
-  const PdfPreviewScreen({Key? key, required this.pdfPath}) : super(key: key);
+  const PdfPreviewScreen({super.key, required this.pdfPath});
 
   @override
   State<PdfPreviewScreen> createState() => _PdfPreviewScreenState();
@@ -21,26 +21,26 @@ class _PdfPreviewScreenState extends State<PdfPreviewScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('PDF Preview'),
+        title: const Text('PDF Preview'),
         actions: [
           if (totalPages != null)
             Center(
               child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16),
+                padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Text('${currentPage + 1}/$totalPages'),
               ),
             ),
           IconButton(
-            icon: Icon(Icons.share),
+            icon: const Icon(Icons.share),
             onPressed: () => _sharePdf(),
             tooltip: 'Share PDF',
           ),
           IconButton(
-            icon: Icon(Icons.folder),
+            icon: const Icon(Icons.folder),
             onPressed: () {
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (context) => DocumentsScreen()),
+                MaterialPageRoute(builder: (context) => const DocumentsScreen()),
               );
             },
             tooltip: 'Go to Documents',
@@ -74,7 +74,7 @@ class _PdfPreviewScreenState extends State<PdfPreviewScreen> {
                 );
               },
             )
-          : Center(
+          : const Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [

@@ -19,18 +19,18 @@ class PermissionsManager {
         final shouldOpen = await showDialog<bool>(
           context: context,
           builder: (context) => AlertDialog(
-            title: Text('Camera Permission Required'),
-            content: Text(
+            title: const Text('Camera Permission Required'),
+            content: const Text(
               'Camera access is required to scan documents. Please enable it in settings.',
             ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context, false),
-                child: Text('Cancel'),
+                child: const Text('Cancel'),
               ),
               ElevatedButton(
                 onPressed: () => Navigator.pop(context, true),
-                child: Text('Open Settings'),
+                child: const Text('Open Settings'),
               ),
             ],
           ),

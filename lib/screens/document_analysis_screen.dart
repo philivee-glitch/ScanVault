@@ -1,4 +1,4 @@
-﻿import 'dart:io';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../subscription_manager.dart';
@@ -10,10 +10,10 @@ class DocumentAnalysisScreen extends StatefulWidget {
   final String documentName;
 
   const DocumentAnalysisScreen({
-    Key? key,
+    super.key,
     required this.imagePath,
     required this.documentName,
-  }) : super(key: key);
+  });
 
   @override
   State<DocumentAnalysisScreen> createState() => _DocumentAnalysisScreenState();
@@ -32,7 +32,7 @@ class _DocumentAnalysisScreenState extends State<DocumentAnalysisScreen> {
   bool _isLoadingSummary = true;
   bool _isAskingQuestion = false;
   
-  List<ChatMessage> _chatHistory = [];
+  final List<ChatMessage> _chatHistory = [];
 
   @override
   void initState() {
@@ -118,11 +118,11 @@ class _DocumentAnalysisScreenState extends State<DocumentAnalysisScreen> {
     FocusScope.of(context).unfocus();
     
     // Scroll to bottom
-    Future.delayed(Duration(milliseconds: 100), () {
+    Future.delayed(const Duration(milliseconds: 100), () {
       if (_scrollController.hasClients) {
         _scrollController.animateTo(
           _scrollController.position.maxScrollExtent,
-          duration: Duration(milliseconds: 300),
+          duration: const Duration(milliseconds: 300),
           curve: Curves.easeOut,
         );
       }
@@ -141,11 +141,11 @@ class _DocumentAnalysisScreenState extends State<DocumentAnalysisScreen> {
       });
 
       // Scroll to bottom again
-      Future.delayed(Duration(milliseconds: 100), () {
+      Future.delayed(const Duration(milliseconds: 100), () {
         if (_scrollController.hasClients) {
           _scrollController.animateTo(
             _scrollController.position.maxScrollExtent,
-            duration: Duration(milliseconds: 300),
+            duration: const Duration(milliseconds: 300),
             curve: Curves.easeOut,
           );
         }
@@ -167,14 +167,14 @@ class _DocumentAnalysisScreenState extends State<DocumentAnalysisScreen> {
     return Scaffold(
       resizeToAvoidBottomInset: true,
       appBar: AppBar(
-        title: Text('Document Analysis'),
+        title: const Text('Document Analysis'),
         actions: [
           IconButton(
-            icon: Icon(Icons.copy),
+            icon: const Icon(Icons.copy),
             onPressed: _extractedText.isEmpty ? null : () {
               Clipboard.setData(ClipboardData(text: _extractedText));
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Text copied to clipboard')),
+                const SnackBar(content: Text('Text copied to clipboard')),
               );
             },
             tooltip: 'Copy All Text',
@@ -201,7 +201,7 @@ class _DocumentAnalysisScreenState extends State<DocumentAnalysisScreen> {
               length: 3,
               child: Column(
                 children: [
-                  TabBar(
+                  const TabBar(
                     labelColor: Colors.blue,
                     tabs: [
                       Tab(text: 'Summary'),
@@ -229,11 +229,11 @@ class _DocumentAnalysisScreenState extends State<DocumentAnalysisScreen> {
 
   Widget _buildSummaryTab() {
     return SingleChildScrollView(
-      padding: EdgeInsets.fromLTRB(16, 16, 16, 100),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          const Row(
             children: [
               Icon(Icons.auto_awesome, color: Colors.purple),
               SizedBox(width: 8),
@@ -246,9 +246,9 @@ class _DocumentAnalysisScreenState extends State<DocumentAnalysisScreen> {
               ),
             ],
           ),
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
           if (_isLoadingSummary)
-            Center(
+            const Center(
               child: Column(
                 children: [
                   CircularProgressIndicator(),
@@ -259,7 +259,7 @@ class _DocumentAnalysisScreenState extends State<DocumentAnalysisScreen> {
             )
           else
             Container(
-              padding: EdgeInsets.fromLTRB(16, 16, 16, 100),
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
               decoration: BoxDecoration(
                 color: Colors.purple.shade50,
                 borderRadius: BorderRadius.circular(12),
@@ -267,11 +267,11 @@ class _DocumentAnalysisScreenState extends State<DocumentAnalysisScreen> {
               ),
               child: Text(
                 _summary.isEmpty ? 'No summary available.' : _summary,
-                style: TextStyle(fontSize: 15, height: 1.5),
+                style: const TextStyle(fontSize: 15, height: 1.5),
               ),
             ),
-          SizedBox(height: 24),
-          Row(
+          const SizedBox(height: 24),
+          const Row(
             children: [
               Icon(Icons.description, color: Colors.blue),
               SizedBox(width: 8),
@@ -284,7 +284,7 @@ class _DocumentAnalysisScreenState extends State<DocumentAnalysisScreen> {
               ),
             ],
           ),
-          SizedBox(height: 12),
+          const SizedBox(height: 12),
           _buildInfoCard('Document Name', widget.documentName),
           _buildInfoCard('Word Count', _extractedText.split(' ').where((w) => w.isNotEmpty).length.toString()),
           _buildInfoCard('Character Count', _extractedText.length.toString()),
@@ -307,7 +307,7 @@ class _DocumentAnalysisScreenState extends State<DocumentAnalysisScreen> {
                 )
               : ListView.builder(
                   controller: _scrollController,
-                  padding: EdgeInsets.only(
+                  padding: const EdgeInsets.only(
                     left: 16,
                     right: 16,
                     top: 16,
@@ -325,7 +325,7 @@ class _DocumentAnalysisScreenState extends State<DocumentAnalysisScreen> {
         
         // Question input with proper padding for navigation bar
         Container(
-          decoration: BoxDecoration(
+          decoration: const BoxDecoration(
             color: Colors.white,
             boxShadow: [
               BoxShadow(
@@ -338,7 +338,7 @@ class _DocumentAnalysisScreenState extends State<DocumentAnalysisScreen> {
           child: SafeArea(
             top: false,
             child: Padding(
-              padding: EdgeInsets.fromLTRB(16, 16, 16, 16),
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
                 child: Row(
                 children: [
                   Expanded(
@@ -349,7 +349,7 @@ class _DocumentAnalysisScreenState extends State<DocumentAnalysisScreen> {
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(24),
                         ),
-                        contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                       ),
                       maxLines: null,
                       textInputAction: TextInputAction.send,
@@ -357,11 +357,11 @@ class _DocumentAnalysisScreenState extends State<DocumentAnalysisScreen> {
                       enabled: !_isAskingQuestion && _extractedText.isNotEmpty,
                     ),
                   ),
-                  SizedBox(width: 8),
+                  const SizedBox(width: 8),
                   CircleAvatar(
                     backgroundColor: Colors.blue,
                     child: IconButton(
-                      icon: Icon(Icons.send, color: Colors.white, size: 20),
+                      icon: const Icon(Icons.send, color: Colors.white, size: 20),
                       onPressed: _isAskingQuestion || _extractedText.isEmpty ? null : _askQuestion,
                     ),
                   ),
@@ -378,8 +378,8 @@ class _DocumentAnalysisScreenState extends State<DocumentAnalysisScreen> {
     return Align(
       alignment: message.isUser ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
-        margin: EdgeInsets.only(bottom: 12),
-        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
         decoration: BoxDecoration(
           color: message.isUser ? Colors.blue : Colors.grey[200],
@@ -400,13 +400,13 @@ class _DocumentAnalysisScreenState extends State<DocumentAnalysisScreen> {
     return Align(
       alignment: Alignment.centerLeft,
       child: Container(
-        margin: EdgeInsets.only(bottom: 12),
-        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
           color: Colors.grey[200],
           borderRadius: BorderRadius.circular(16),
         ),
-        child: Row(
+        child: const Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             SizedBox(
@@ -424,14 +424,14 @@ class _DocumentAnalysisScreenState extends State<DocumentAnalysisScreen> {
 
   Widget _buildFullTextTab() {
     return SingleChildScrollView(
-      padding: EdgeInsets.fromLTRB(16, 16, 16, 100),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
+              const Text(
                 'Extracted Text',
                 style: TextStyle(
                   fontSize: 18,
@@ -439,20 +439,20 @@ class _DocumentAnalysisScreenState extends State<DocumentAnalysisScreen> {
                 ),
               ),
               IconButton(
-                icon: Icon(Icons.copy),
+                icon: const Icon(Icons.copy),
                 onPressed: _extractedText.isEmpty ? null : () {
                   Clipboard.setData(ClipboardData(text: _extractedText));
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Text copied to clipboard')),
+                    const SnackBar(content: Text('Text copied to clipboard')),
                   );
                 },
                 tooltip: 'Copy Text',
               ),
             ],
           ),
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
           if (_isLoadingOCR)
-            Center(
+            const Center(
               child: Column(
                 children: [
                   CircularProgressIndicator(),
@@ -464,7 +464,7 @@ class _DocumentAnalysisScreenState extends State<DocumentAnalysisScreen> {
           else
             SelectableText(
               _extractedText.isEmpty ? 'No text extracted from document.' : _extractedText,
-              style: TextStyle(fontSize: 15, height: 1.6),
+              style: const TextStyle(fontSize: 15, height: 1.6),
             ),
         ],
       ),
@@ -473,8 +473,8 @@ class _DocumentAnalysisScreenState extends State<DocumentAnalysisScreen> {
 
   Widget _buildInfoCard(String label, String value) {
     return Container(
-      margin: EdgeInsets.only(bottom: 8),
-      padding: EdgeInsets.all(12),
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Colors.blue.shade50,
         borderRadius: BorderRadius.circular(8),
@@ -485,7 +485,7 @@ class _DocumentAnalysisScreenState extends State<DocumentAnalysisScreen> {
         children: [
           Text(
             label,
-            style: TextStyle(fontWeight: FontWeight.w500),
+            style: const TextStyle(fontWeight: FontWeight.w500),
           ),
           Text(
             value,

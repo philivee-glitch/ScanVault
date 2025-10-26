@@ -2,14 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:path_provider/path_provider.dart';
-import 'dart:io';
 import '../subscription_manager.dart';
 import 'privacy_policy_screen.dart';
 import 'terms_of_service_screen.dart';
 import 'premium_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
-  const SettingsScreen({Key? key}) : super(key: key);
+  const SettingsScreen({super.key});
 
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
@@ -30,7 +29,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _loadInfo() async {
     final packageInfo = await PackageInfo.fromPlatform();
     final premium = _subscriptionManager.isPremium;
-    final inTrial = false; // Trial not implemented yet
+    const inTrial = false; // Trial not implemented yet
     
     setState(() {
       _version = packageInfo.version;
@@ -43,7 +42,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Settings'),
+        title: const Text('Settings'),
       ),
       body: ListView(
         children: [
@@ -53,86 +52,86 @@ class _SettingsScreenState extends State<SettingsScreen> {
           
           if (!_isPremium)
             ListTile(
-              leading: Icon(Icons.workspace_premium, color: Colors.amber),
-              title: Text('Upgrade to Premium'),
-              subtitle: Text('Unlock all premium features'),
-              trailing: Icon(Icons.arrow_forward_ios, size: 16),
+              leading: const Icon(Icons.workspace_premium, color: Colors.amber),
+              title: const Text('Upgrade to Premium'),
+              subtitle: const Text('Unlock all premium features'),
+              trailing: const Icon(Icons.arrow_forward_ios, size: 16),
               onTap: () {
                 Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => PremiumScreen()),
+                    MaterialPageRoute(builder: (context) => const PremiumScreen()),
                   );
               },
             ),
           
           if (_isPremium)
             ListTile(
-              leading: Icon(Icons.restore, color: Colors.blue),
-              title: Text('Restore Purchases'),
-              subtitle: Text('Restore your subscription'),
+              leading: const Icon(Icons.restore, color: Colors.blue),
+              title: const Text('Restore Purchases'),
+              subtitle: const Text('Restore your subscription'),
               onTap: _restorePurchases,
             ),
           
-          Divider(),
+          const Divider(),
           
           // Storage
           _buildSection('Storage'),
           ListTile(
-            leading: Icon(Icons.cleaning_services),
-            title: Text('Clear Cache'),
-            subtitle: Text('Free up storage space'),
+            leading: const Icon(Icons.cleaning_services),
+            title: const Text('Clear Cache'),
+            subtitle: const Text('Free up storage space'),
             onTap: _clearCache,
           ),
           
-          Divider(),
+          const Divider(),
           
           // Legal
           _buildSection('Legal'),
           ListTile(
-            leading: Icon(Icons.privacy_tip),
-            title: Text('Privacy Policy'),
-            trailing: Icon(Icons.arrow_forward_ios, size: 16),
+            leading: const Icon(Icons.privacy_tip),
+            title: const Text('Privacy Policy'),
+            trailing: const Icon(Icons.arrow_forward_ios, size: 16),
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => PrivacyPolicyScreen()),
+                MaterialPageRoute(builder: (context) => const PrivacyPolicyScreen()),
               );
             },
           ),
           ListTile(
-            leading: Icon(Icons.description),
-            title: Text('Terms of Service'),
-            trailing: Icon(Icons.arrow_forward_ios, size: 16),
+            leading: const Icon(Icons.description),
+            title: const Text('Terms of Service'),
+            trailing: const Icon(Icons.arrow_forward_ios, size: 16),
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => TermsOfServiceScreen()),
+                MaterialPageRoute(builder: (context) => const TermsOfServiceScreen()),
               );
             },
           ),
           
-          Divider(),
+          const Divider(),
           
           // Support
           _buildSection('Support'),
           ListTile(
-            leading: Icon(Icons.email),
-            title: Text('Contact Support'),
-            subtitle: Text('info@codenestle.com.au'),
+            leading: const Icon(Icons.email),
+            title: const Text('Contact Support'),
+            subtitle: const Text('info@codenestle.com.au'),
             onTap: _contactSupport,
           ),
           ListTile(
-            leading: Icon(Icons.info),
-            title: Text('About'),
+            leading: const Icon(Icons.info),
+            title: const Text('About'),
             onTap: _showAboutDialog,
           ),
           
-          Divider(),
+          const Divider(),
           
           // Version
           ListTile(
-            leading: Icon(Icons.info_outline),
-            title: Text('Version'),
+            leading: const Icon(Icons.info_outline),
+            title: const Text('Version'),
             subtitle: Text(_version),
           ),
         ],
@@ -142,7 +141,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Widget _buildSection(String title) {
     return Padding(
-      padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
       child: Text(
         title.toUpperCase(),
         style: TextStyle(
@@ -162,10 +161,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
       title: Text(_isPremium ? 'Premium Account' : 'Free Account'),
       subtitle: _isInTrial
-          ? Text('Trial: ${"N/A"}')
+          ? const Text('Trial: ${"N/A"}')
           : Text(_isPremium ? 'All features unlocked' : '10 scans per month'),
       trailing: Container(
-        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
           color: _isPremium ? Colors.amber.shade50 : Colors.grey.shade200,
           borderRadius: BorderRadius.circular(12),
@@ -186,20 +185,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => Center(child: CircularProgressIndicator()),
+      builder: (context) => const Center(child: CircularProgressIndicator()),
     );
 
     try {
       // Restore purchases not implemented yet
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Restore purchases coming soon!')),
+        const SnackBar(content: Text('Restore purchases coming soon!')),
       );
       
       if (mounted) {
         Navigator.pop(context); // Close loading
         
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+          const SnackBar(
             content: Text('✓ Purchases restored successfully'),
             backgroundColor: Colors.green,
           ),
@@ -212,7 +211,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         Navigator.pop(context); // Close loading
         
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+          const SnackBar(
             content: Text('No purchases found to restore'),
             backgroundColor: Colors.orange,
           ),
@@ -225,18 +224,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Clear Cache?'),
-        content: Text(
+        title: const Text('Clear Cache?'),
+        content: const Text(
           'This will free up storage space but won\'t delete your documents.',
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: Text('Cancel'),
+            child: const Text('Cancel'),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
-            child: Text('Clear'),
+            child: const Text('Clear'),
           ),
         ],
       ),
@@ -252,7 +251,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
+            const SnackBar(
               content: Text('✓ Cache cleared successfully'),
               backgroundColor: Colors.green,
             ),
@@ -261,7 +260,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
+            const SnackBar(
               content: Text('Failed to clear cache'),
               backgroundColor: Colors.red,
             ),
@@ -289,7 +288,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+          const SnackBar(
             content: Text('Please email: info@codenestle.com.au'),
             backgroundColor: Colors.orange,
           ),
@@ -302,7 +301,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Row(
+        title: const Row(
           children: [
             Icon(Icons.document_scanner, color: Colors.blue),
             SizedBox(width: 8),
@@ -313,21 +312,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
+            const Text(
               'ScanVault Premium',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
               ),
             ),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
             Text('Version $_version'),
-            SizedBox(height: 16),
-            Text(
+            const SizedBox(height: 16),
+            const Text(
               'Professional document scanner with AI-powered OCR and smart organization.',
               style: TextStyle(fontSize: 14),
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             Text(
               '© 2025 Code Nestle',
               style: TextStyle(fontSize: 12, color: Colors.grey[600]),
@@ -337,7 +336,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Close'),
+            child: const Text('Close'),
           ),
         ],
       ),

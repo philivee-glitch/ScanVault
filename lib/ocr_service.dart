@@ -241,7 +241,7 @@ class OCRService {
     return showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Row(
+        title: const Row(
           children: [
             Icon(Icons.text_fields, color: Colors.blue),
             SizedBox(width: 8),
@@ -262,37 +262,37 @@ class OCRService {
               Row(
                 children: [
                   Chip(
-                    avatar: Icon(Icons.language, size: 16),
+                    avatar: const Icon(Icons.language, size: 16),
                     label: Text(result.language),
                     backgroundColor: Colors.blue.shade50,
                   ),
-                  SizedBox(width: 8),
+                  const SizedBox(width: 8),
                   Chip(
-                    avatar: Icon(Icons.check_circle, size: 16),
+                    avatar: const Icon(Icons.check_circle, size: 16),
                     label: Text('${(result.confidence * 100).toStringAsFixed(0)}%'),
                     backgroundColor: Colors.green.shade50,
                   ),
                 ],
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               
               // Extracted text
               Container(
-                padding: EdgeInsets.all(12),
+                padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: Colors.grey.shade100,
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(color: Colors.grey.shade300),
                 ),
-                constraints: BoxConstraints(maxHeight: 400),
+                constraints: const BoxConstraints(maxHeight: 400),
                 child: SingleChildScrollView(
                   child: SelectableText(
                     result.text,
-                    style: TextStyle(fontSize: 14, height: 1.5),
+                    style: const TextStyle(fontSize: 14, height: 1.5),
                   ),
                 ),
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               
               Text(
                 '${result.text.split('\n').length} lines • ${result.text.split(' ').length} words',
@@ -304,7 +304,7 @@ class OCRService {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Close'),
+            child: const Text('Close'),
           ),
           TextButton.icon(
             onPressed: () async {
@@ -324,8 +324,8 @@ class OCRService {
                 );
               }
             },
-            icon: Icon(Icons.save),
-            label: Text('Save as TXT'),
+            icon: const Icon(Icons.save),
+            label: const Text('Save as TXT'),
           ),
         ],
       ),

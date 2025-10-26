@@ -1,8 +1,8 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../subscription_manager.dart';
 
 class PremiumScreen extends StatefulWidget {
-  const PremiumScreen({Key? key}) : super(key: key);
+  const PremiumScreen({super.key});
 
   @override
   State<PremiumScreen> createState() => _PremiumScreenState();
@@ -16,7 +16,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Upgrade to Premium'),
+        title: const Text('Upgrade to Premium'),
         backgroundColor: Colors.amber,
       ),
       body: SingleChildScrollView(
@@ -25,15 +25,15 @@ class _PremiumScreenState extends State<PremiumScreen> {
             // Header
             Container(
               width: double.infinity,
-              padding: EdgeInsets.all(24),
-              decoration: BoxDecoration(
+              padding: const EdgeInsets.all(24),
+              decoration: const BoxDecoration(
                 gradient: LinearGradient(
                   colors: [Colors.amber, Colors.orange],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
               ),
-              child: Column(
+              child: const Column(
                 children: [
                   Icon(Icons.workspace_premium, size: 80, color: Colors.white),
                   SizedBox(height: 16),
@@ -54,19 +54,19 @@ class _PremiumScreenState extends State<PremiumScreen> {
               ),
             ),
 
-            SizedBox(height: 24),
+            const SizedBox(height: 24),
 
             // Features List
             Padding(
-              padding: EdgeInsets.symmetric(horizontal: 24),
+              padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
+                  const Text(
                     'Premium Features:',
                     style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
-                  SizedBox(height: 16),
+                  const SizedBox(height: 16),
                   _buildFeature('🔓 Unlimited Scans', 'Scan as many documents as you need'),
                   _buildFeature('🤖 AI Document Analysis', 'Smart categorization and key info extraction'),
                   _buildFeature('📝 OCR Text Recognition', 'Extract and search text from documents'),
@@ -80,18 +80,18 @@ class _PremiumScreenState extends State<PremiumScreen> {
               ),
             ),
 
-            SizedBox(height: 32),
+            const SizedBox(height: 32),
 
             // Pricing Plans
             Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Column(
                 children: [
-                  Text(
+                  const Text(
                     'Choose Your Plan:',
                     style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
-                  SizedBox(height: 16),
+                  const SizedBox(height: 16),
                   
                   // Monthly Plan
                   _buildPricingCard(
@@ -102,7 +102,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
                     isPremium: false,
                   ),
                   
-                  SizedBox(height: 12),
+                  const SizedBox(height: 12),
                   
                   // Yearly Plan (Best Value)
                   _buildPricingCard(
@@ -114,7 +114,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
                     savings: 'Save 50%',
                   ),
                   
-                  SizedBox(height: 12),
+                  const SizedBox(height: 12),
                   
                   // Lifetime Plan
                   _buildPricingCard(
@@ -129,11 +129,11 @@ class _PremiumScreenState extends State<PremiumScreen> {
               ),
             ),
 
-            SizedBox(height: 32),
+            const SizedBox(height: 32),
 
             // Subscribe Button
             Padding(
-              padding: EdgeInsets.symmetric(horizontal: 24),
+              padding: const EdgeInsets.symmetric(horizontal: 24),
               child: SizedBox(
                 width: double.infinity,
                 height: 56,
@@ -146,7 +146,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
                       borderRadius: BorderRadius.circular(16),
                     ),
                   ),
-                  child: Text(
+                  child: const Text(
                     'Subscribe Now',
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
@@ -154,10 +154,10 @@ class _PremiumScreenState extends State<PremiumScreen> {
               ),
             ),
 
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
 
             // Terms
-            Padding(
+            const Padding(
               padding: EdgeInsets.symmetric(horizontal: 24),
               child: Text(
                 'Payment will be charged to your account. Subscription automatically renews unless cancelled 24 hours before the end of the current period.',
@@ -166,7 +166,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
               ),
             ),
 
-            SizedBox(height: 32),
+            const SizedBox(height: 32),
           ],
         ),
       ),
@@ -175,21 +175,21 @@ class _PremiumScreenState extends State<PremiumScreen> {
 
   Widget _buildFeature(String title, String description) {
     return Padding(
-      padding: EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.only(bottom: 16),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.check_circle, color: Colors.green, size: 24),
-          SizedBox(width: 12),
+          const Icon(Icons.check_circle, color: Colors.green, size: 24),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   title,
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                 ),
-                SizedBox(height: 4),
+                const SizedBox(height: 4),
                 Text(
                   description,
                   style: TextStyle(fontSize: 14, color: Colors.grey[600]),
@@ -215,7 +215,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
     return GestureDetector(
       onTap: () => setState(() => _selectedPlan = planId),
       child: Container(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: isSelected ? Colors.amber.shade50 : Colors.white,
           border: Border.all(
@@ -245,7 +245,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
                       child: Container(
                         width: 12,
                         height: 12,
-                        decoration: BoxDecoration(
+                        decoration: const BoxDecoration(
                           shape: BoxShape.circle,
                           color: Colors.amber,
                         ),
@@ -254,7 +254,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
                   : null,
             ),
             
-            SizedBox(width: 16),
+            const SizedBox(width: 16),
             
             // Plan details
             Expanded(
@@ -265,22 +265,22 @@ class _PremiumScreenState extends State<PremiumScreen> {
                     children: [
                       Text(
                         title,
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       if (savings != null) ...[
-                        SizedBox(width: 8),
+                        const SizedBox(width: 8),
                         Container(
-                          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
                             color: Colors.green,
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
                             savings,
-                            style: TextStyle(
+                            style: const TextStyle(
                               color: Colors.white,
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
@@ -290,7 +290,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
                       ],
                     ],
                   ),
-                  SizedBox(height: 4),
+                  const SizedBox(height: 4),
                   Text(
                     period,
                     style: TextStyle(fontSize: 14, color: Colors.grey[600]),
@@ -323,7 +323,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
         context: context,
         barrierDismissible: false,
         builder: (context) => AlertDialog(
-          title: Row(
+          title: const Row(
             children: [
               Icon(Icons.check_circle, color: Colors.green, size: 32),
               SizedBox(width: 12),
@@ -334,20 +334,20 @@ class _PremiumScreenState extends State<PremiumScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
+              const Text(
                 'You now have access to all premium features:',
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
-              SizedBox(height: 12),
-              Text('✓ Unlimited scans'),
-              Text('✓ AI Document Analysis'),
-              Text('✓ OCR Text Recognition'),
-              Text('✓ Advanced filters & adjustments'),
-              Text('✓ No watermarks'),
-              Text('✓ And much more!'),
-              SizedBox(height: 12),
+              const SizedBox(height: 12),
+              const Text('✓ Unlimited scans'),
+              const Text('✓ AI Document Analysis'),
+              const Text('✓ OCR Text Recognition'),
+              const Text('✓ Advanced filters & adjustments'),
+              const Text('✓ No watermarks'),
+              const Text('✓ And much more!'),
+              const SizedBox(height: 12),
               Container(
-                padding: EdgeInsets.all(12),
+                padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: Colors.blue.shade50,
                   borderRadius: BorderRadius.circular(8),
@@ -370,7 +370,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
                 backgroundColor: Colors.amber,
                 foregroundColor: Colors.black,
               ),
-              child: Text('Start Using Premium'),
+              child: const Text('Start Using Premium'),
             ),
           ],
         ),

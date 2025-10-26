@@ -1,4 +1,4 @@
-﻿import 'dart:convert';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -320,7 +320,7 @@ Respond in this JSON format:
       return 'Document text is too short to summarize effectively.';
     }
     
-    return goodSentences.join('. ') + '.';
+    return '${goodSentences.join('. ')}.';
   }
 
   Future<String> answerQuestion(String documentText, String question) async {
@@ -475,7 +475,7 @@ Respond in this JSON format:
     return showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Row(
+        title: const Row(
           children: [
             Icon(Icons.auto_awesome, color: Colors.purple),
             SizedBox(width: 8),
@@ -489,7 +489,7 @@ Respond in this JSON format:
             children: [
               // Category
               Container(
-                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
                   color: result.category.color.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(20),
@@ -501,7 +501,7 @@ Respond in this JSON format:
                     Icon(result.category.icon, 
                          size: 20, 
                          color: result.category.color),
-                    SizedBox(width: 8),
+                    const SizedBox(width: 8),
                     Text(
                       result.category.name,
                       style: TextStyle(
@@ -512,35 +512,35 @@ Respond in this JSON format:
                   ],
                 ),
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               
               // Summary
-              Text(
+              const Text(
                 'Summary',
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
                 ),
               ),
-              SizedBox(height: 8),
+              const SizedBox(height: 8),
               Text(
                 result.summary,
-                style: TextStyle(height: 1.5),
+                style: const TextStyle(height: 1.5),
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               
               // Key Information
               if (result.keyInfo.isNotEmpty) ...[
-                Text(
+                const Text(
                   'Key Information',
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
                   ),
                 ),
-                SizedBox(height: 8),
+                const SizedBox(height: 8),
                 ...result.keyInfo.entries.map((entry) => Padding(
-                  padding: EdgeInsets.symmetric(vertical: 4),
+                  padding: const EdgeInsets.symmetric(vertical: 4),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -560,36 +560,36 @@ Respond in this JSON format:
                     ],
                   ),
                 )),
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
               ],
               
               // Tags
               if (result.tags.isNotEmpty) ...[
-                Text(
+                const Text(
                   'Tags',
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
                   ),
                 ),
-                SizedBox(height: 8),
+                const SizedBox(height: 8),
                 Wrap(
                   spacing: 8,
                   runSpacing: 8,
                   children: result.tags.map((tag) => Chip(
                     label: Text(tag),
                     backgroundColor: Colors.blue.shade50,
-                    labelStyle: TextStyle(fontSize: 12),
+                    labelStyle: const TextStyle(fontSize: 12),
                   )).toList(),
                 ),
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
               ],
               
               // Confidence
               Row(
                 children: [
-                  Icon(Icons.verified, size: 16, color: Colors.green),
-                  SizedBox(width: 4),
+                  const Icon(Icons.verified, size: 16, color: Colors.green),
+                  const SizedBox(width: 4),
                   Text(
                     'Confidence: ${(result.confidence * 100).toStringAsFixed(0)}%',
                     style: TextStyle(
@@ -605,7 +605,7 @@ Respond in this JSON format:
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Close'),
+            child: const Text('Close'),
           ),
         ],
       ),
