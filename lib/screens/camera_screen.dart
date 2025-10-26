@@ -277,7 +277,7 @@ class _CameraScreenState extends State<CameraScreen> {
             _buildFeature('Unlimited multi-page scanning'),
             _buildFeature('AI-powered enhancement'),
             _buildFeature('OCR text recognition'),
-            _buildFeature('Cloud backup'),
+            _buildFeature('Share to your cloud'),
             const SizedBox(height: 16),
             Container(
               padding: const EdgeInsets.all(12),
@@ -355,7 +355,7 @@ class _CameraScreenState extends State<CameraScreen> {
             _buildFeature('Unlimited multi-page scanning'),
             _buildFeature('AI-powered enhancement'),
             _buildFeature('OCR text recognition'),
-            _buildFeature('Cloud backup'),
+            _buildFeature('Share to your cloud'),
             const SizedBox(height: 16),
             Container(
               padding: const EdgeInsets.all(12),

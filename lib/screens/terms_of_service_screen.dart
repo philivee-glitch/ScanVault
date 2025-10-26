@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 class TermsOfServiceScreen extends StatelessWidget {
   const TermsOfServiceScreen({super.key});
@@ -42,25 +42,29 @@ class TermsOfServiceScreen extends StatelessWidget {
               'We grant you a limited, non-exclusive, non-transferable, revocable license to use the App for personal, non-commercial purposes in accordance with these Terms.',
             ),
 
-            _buildSection(
+                        _buildSection(
               'Free Tier Features',
               'The free version of VaultScan includes:\n\n'
-              '• 5 scans per day\n'
+              '• Unlimited scans (ad-supported)\n'
               '• Basic PDF export\n'
               '• Auto edge detection\n'
               '• Basic filters\n'
+              '• Single-page scanning\n'
+              '• Share to your cloud storage\n'
               '• Watermark on exports\n\n'
-              'Free tier does not include OCR, cloud sync, or batch processing features.',
+              'Free tier does not include: Multi-page scanning, OCR text recognition, AI-powered enhancement, or batch processing.',
             ),
 
             _buildSection(
               'Premium Subscription',
               'Premium subscriptions provide:\n\n'
-              '• Unlimited daily scans\n'
+              '• All free features without ads\n'
+              '• Multi-page scanning\n'
+              '• AI-powered enhancement\n'
+              '• OCR text recognition\n'
               '• No watermarks on PDFs\n'
-              '• All premium features\n'
               '• Priority support\n\n'
-              'Subscriptions are available as monthly or yearly plans.',
+              'Subscriptions are available with a 3-day free trial.',
             ),
 
             _buildSection(

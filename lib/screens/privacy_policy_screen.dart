@@ -34,7 +34,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
 
             _buildSection(
               'Information We Collect',
-              'VaultScan Premium collects and stores documents that you scan using the app. All documents are stored locally on your device and are not transmitted to our servers unless you explicitly choose to use cloud backup features (Premium feature).',
+              'VaultScan Premium collects and stores documents that you scan using the app. All documents are stored locally on your device and are not transmitted to our servers unless you explicitly choose to share/export them to your own cloud storage (Google Drive, Dropbox, etc). VaultScan does not host or store your files on our servers.',
             ),
 
             _buildSection(
