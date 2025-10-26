@@ -1,4 +1,5 @@
-﻿import 'package:flutter/material.dart';
+import 'dart:io';
+import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'subscription_manager.dart';
 
@@ -9,9 +10,24 @@ class AdManager {
 
   final SubscriptionManager _subscriptionManager = SubscriptionManager();
 
-  // Test Ad Unit IDs (replace with real ones for production)
-  static const String _bannerAdUnitId = 'ca-app-pub-3940256099942544/6300978111'; // Test ID
-  static const String _interstitialAdUnitId = 'ca-app-pub-3940256099942544/1033173712'; // Test ID
+  // Platform-specific Ad Unit IDs
+  static String get _bannerAdUnitId {
+    if (Platform.isIOS) {
+      return 'ca-app-pub-9349326189536065/3756929133'; // iOS Real
+    } else if (Platform.isAndroid) {
+      return 'ca-app-pub-3940256099942544/6300978111'; // Android Test (update on Windows)
+    }
+    return '';
+  }
+
+  static String get _interstitialAdUnitId {
+    if (Platform.isIOS) {
+      return 'ca-app-pub-9349326189536065/6466852957'; // iOS Real
+    } else if (Platform.isAndroid) {
+      return 'ca-app-pub-3940256099942544/1033173712'; // Android Test (update on Windows)
+    }
+    return '';
+  }
 
   BannerAd? _bannerAd;
   InterstitialAd? _interstitialAd;

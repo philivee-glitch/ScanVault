@@ -51,5 +51,7 @@
 	<string>This app needs photo library access to save and load scanned documents</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>This app needs permission to save scanned documents to your photo library</string>
+	<key>GADApplicationIdentifier</key>
+	<string>ca-app-pub-9349326189536065~9737488904</string>
 </dict>
 </plist>
