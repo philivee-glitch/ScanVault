@@ -198,16 +198,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    if (false) // Trial not implemented
-                      Text(
-                        'Trial: ${"N/A"}',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey[700],
-                        ),
-                      )
-                    else
-                      Text(
+                    Text(
                         'Unlimited scans, AI features',
                         style: TextStyle(
                           fontSize: 14,

@@ -30,7 +30,6 @@ class _EnhancementScreenState extends State<EnhancementScreen> {
   int _rotation = 0;
   bool _isProcessing = false;
   String? _processedImagePath;
-  List<String> _allPages = [];
 
   final List<String> _filters = ['Original', 'B&W', 'Grayscale', 'Sharp'];
 
@@ -38,7 +37,6 @@ class _EnhancementScreenState extends State<EnhancementScreen> {
   void initState() {
     super.initState();
     _processedImagePath = widget.imagePath;
-    _allPages = [widget.imagePath, ...(widget.additionalPages ?? [])];
   }
 
   @override
