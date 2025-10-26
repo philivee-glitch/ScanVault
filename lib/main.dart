@@ -1,8 +1,6 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'screens/home_screen.dart';
-import 'subscription_manager.dart';
-import 'subscription_manager.dart';
 import 'ocr_service.dart';
 
 void main() async {
@@ -10,7 +8,6 @@ void main() async {
   
   // Initialize services
   await OCRService().initialize();
-  await SubscriptionManager().initialize();
   
   // Set portrait orientation
   SystemChrome.setPreferredOrientations([
@@ -27,7 +24,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'ScanVault Premium',
+      title: 'VaultScan',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         primarySwatch: Colors.blue,
