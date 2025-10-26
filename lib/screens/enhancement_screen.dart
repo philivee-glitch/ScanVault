@@ -434,7 +434,7 @@ class _EnhancementScreenState extends State<EnhancementScreen> {
                       child: pw.Opacity(
                         opacity: 0.25,
                         child: pw.Text(
-                          'ScanVault',
+                          'VaultScan',
                           style: pw.TextStyle(
                             fontSize: 72,
                             color: PdfColors.grey700,

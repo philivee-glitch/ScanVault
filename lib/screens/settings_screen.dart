@@ -275,7 +275,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       scheme: 'mailto',
       path: 'info@codenestle.com.au',
       queryParameters: {
-        'subject': 'ScanVault Premium Support',
+        'subject': 'VaultScan Premium Support',
       },
     );
 
@@ -313,7 +313,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'ScanVault Premium',
+              'VaultScan Premium',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,

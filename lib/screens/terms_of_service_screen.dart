@@ -16,7 +16,7 @@ class TermsOfServiceScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'ScanVault Premium - Terms of Service',
+              'VaultScan Premium - Terms of Service',
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
@@ -34,7 +34,7 @@ class TermsOfServiceScreen extends StatelessWidget {
 
             _buildSection(
               'Agreement to Terms',
-              'By downloading, installing, or using ScanVault Premium ("the App"), you agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use the App.',
+              'By downloading, installing, or using VaultScan Premium ("the App"), you agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use the App.',
             ),
 
             _buildSection(
@@ -44,7 +44,7 @@ class TermsOfServiceScreen extends StatelessWidget {
 
             _buildSection(
               'Free Tier Features',
-              'The free version of ScanVault includes:\n\n'
+              'The free version of VaultScan includes:\n\n'
               '• 5 scans per day\n'
               '• Basic PDF export\n'
               '• Auto edge detection\n'
@@ -128,7 +128,7 @@ class TermsOfServiceScreen extends StatelessWidget {
             
             Center(
               child: Text(
-                '© ${DateTime.now().year} ScanVault. All rights reserved.',
+                '© ${DateTime.now().year} VaultScan. All rights reserved.',
                 style: TextStyle(
                   color: Colors.grey[600],
                   fontSize: 12,

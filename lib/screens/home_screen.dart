@@ -87,7 +87,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('ScanVault Premium'),
+        title: const Text('VaultScan Premium'),
         actions: [
           IconButton(
             icon: const Icon(Icons.settings),

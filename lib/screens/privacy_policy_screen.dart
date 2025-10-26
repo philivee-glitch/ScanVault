@@ -16,7 +16,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'ScanVault Premium - Privacy Policy',
+              'VaultScan Premium - Privacy Policy',
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
@@ -34,7 +34,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
 
             _buildSection(
               'Information We Collect',
-              'ScanVault Premium collects and stores documents that you scan using the app. All documents are stored locally on your device and are not transmitted to our servers unless you explicitly choose to use cloud backup features (Premium feature).',
+              'VaultScan Premium collects and stores documents that you scan using the app. All documents are stored locally on your device and are not transmitted to our servers unless you explicitly choose to use cloud backup features (Premium feature).',
             ),
 
             _buildSection(
@@ -58,7 +58,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
 
             _buildSection(
               'Camera Permission',
-              'ScanVault requires camera access to scan documents. The camera is only used when you actively choose to scan a document. We do not access your camera at any other time.',
+              'VaultScan requires camera access to scan documents. The camera is only used when you actively choose to scan a document. We do not access your camera at any other time.',
             ),
 
             _buildSection(
@@ -102,7 +102,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
             
             Center(
               child: Text(
-                '© ${DateTime.now().year} ScanVault. All rights reserved.',
+                '© ${DateTime.now().year} VaultScan. All rights reserved.',
                 style: TextStyle(
                   color: Colors.grey[600],
                   fontSize: 12,

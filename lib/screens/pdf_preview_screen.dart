@@ -91,7 +91,7 @@ class _PdfPreviewScreenState extends State<PdfPreviewScreen> {
     try {
       await Share.shareXFiles(
         [XFile(widget.pdfPath)],
-        text: 'Scanned document from ScanVault',
+        text: 'Scanned document from VaultScan',
       );
     } catch (e) {
       debugPrint('Share error: $e');
