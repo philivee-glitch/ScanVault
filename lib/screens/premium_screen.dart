@@ -2,7 +2,7 @@
 import '../subscription_manager.dart';
 
 class PremiumScreen extends StatefulWidget {
-  const PremiumScreen({super.key});
+  const PremiumScreen({Key? key}) : super(key: key);
 
   @override
   State<PremiumScreen> createState() => _PremiumScreenState();
@@ -10,373 +10,431 @@ class PremiumScreen extends StatefulWidget {
 
 class _PremiumScreenState extends State<PremiumScreen> {
   final SubscriptionManager _subscriptionManager = SubscriptionManager();
-  String _selectedPlan = 'yearly'; // monthly, yearly, lifetime
+  bool _isLoading = false;
+  String? _selectedProductId;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Remove Ads'),
-        backgroundColor: Colors.amber,
+        elevation: 0,
       ),
       body: SingleChildScrollView(
+        padding: const EdgeInsets.all(20.0),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Header
+            // Hero Section
             Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(24),
-              decoration: const BoxDecoration(
+              padding: const EdgeInsets.all(32.0),
+              decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [Colors.amber, Colors.orange],
+                  colors: [Colors.amber.shade600, Colors.orange.shade700],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
+                borderRadius: BorderRadius.circular(20.0),
               ),
-              child: const Column(
+              child: Column(
                 children: [
-                  Icon(Icons.workspace_premium, size: 80, color: Colors.white),
-                  SizedBox(height: 16),
-                  Text(
-                    'Enjoy Ad-Free Experience',
+                  Icon(
+                    Icons.workspace_premium,
+                    size: 80,
+                    color: Colors.white,
+                  ),
+                  const SizedBox(height: 20),
+                  const Text(
+                    'Go Ad-Free!',
                     style: TextStyle(
-                      fontSize: 28,
+                      fontSize: 32,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
                     ),
                   ),
-                  SizedBox(height: 8),
-                  Text(
-                    'Get unlimited access to all features',
-                    style: TextStyle(fontSize: 16, color: Colors.white70),
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 24),
-
-            // Features List
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Premium Features:',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 16),
-                  _buildFeature('ðŸ”“ Unlimited Scans', 'Scan as many documents as you need'),
-                  _buildFeature('ðŸ¤– AI Document Analysis', 'Smart categorization and key info extraction'),
-                  _buildFeature('ðŸ“ OCR Text Recognition', 'Extract and search text from documents'),
-                  _buildFeature('ðŸŽ¨ Advanced Filters', 'B&W, Sharp, and more enhancement options'),
-                  _buildFeature('ðŸŽšï¸ Image Adjustments', 'Fine-tune contrast and saturation'),
-                  _buildFeature('ðŸ“Š Batch Operations', 'Manage multiple documents at once'),
-                  _buildFeature('ðŸš« No Watermarks', 'Clean, professional PDFs'),
-                  _buildFeature('ðŸ“ Unlimited Folders', 'Organize documents your way'),
-                  _buildFeature('ðŸš€ Priority Support', 'Get help when you need it'),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 32),
-
-            // Pricing Plans
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Column(
-                children: [
-                  const Text(
-                    'Choose Your Plan:',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 16),
-                  
-                  // Monthly Plan
-                  _buildPricingCard(
-                    'Monthly',
-                    '\$4.99',
-                    'per month',
-                    'monthly',
-                    isPremium: false,
-                  ),
-                  
                   const SizedBox(height: 12),
-                  
-                  // Yearly Plan (Best Value)
-                  _buildPricingCard(
-                    'Yearly',
-                    '\$29.99',
-                    'per year',
-                    'yearly',
-                    isPremium: true,
-                    savings: 'Save 50%',
-                  ),
-                  
-                  const SizedBox(height: 12),
-                  
-                  // Lifetime Plan
-                  _buildPricingCard(
-                    'Lifetime',
-                    '\$59.99',
-                    'one-time payment',
-                    'lifetime',
-                    isPremium: false,
-                    savings: 'Best Deal',
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 32),
-
-            // Subscribe Button
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: ElevatedButton(
-                  onPressed: _handleSubscribe,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.amber,
-                    foregroundColor: Colors.black,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
+                  const Text(
+                    'All features, zero interruptions',
+                    style: TextStyle(
+                      fontSize: 18,
+                      color: Colors.white,
+                      fontWeight: FontWeight.w300,
                     ),
                   ),
-                  child: const Text(
-                    'Subscribe Now',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 32),
+
+            // Premium Features Header
+            const Text(
+              'Premium Features:',
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // Features List
+            _buildFeatureItem(
+              icon: Icons.document_scanner,
+              title: 'Unlimited Scans',
+              description: 'Scan as many documents as you need',
+            ),
+            _buildFeatureItem(
+              icon: Icons.psychology,
+              title: 'AI Document Analysis',
+              description: 'Smart categorization and key info extraction',
+            ),
+            _buildFeatureItem(
+              icon: Icons.text_fields,
+              title: 'OCR Text Recognition',
+              description: 'Extract and search text from documents',
+            ),
+            _buildFeatureItem(
+              icon: Icons.tune,
+              title: 'Advanced Filters',
+              description: 'B&W, Sharp, and more enhancement options',
+            ),
+            _buildFeatureItem(
+              icon: Icons.palette,
+              title: 'Image Adjustments',
+              description: 'Fine-tune contrast and saturation',
+            ),
+            _buildFeatureItem(
+              icon: Icons.layers,
+              title: 'Batch Operations',
+              description: 'Manage multiple documents at once',
+            ),
+            _buildFeatureItem(
+              icon: Icons.no_encryption,
+              title: 'No Watermarks',
+              description: 'Clean, professional PDFs',
+            ),
+            _buildFeatureItem(
+              icon: Icons.folder,
+              title: 'Unlimited Folders',
+              description: 'Organize documents your way',
+            ),
+            _buildFeatureItem(
+              icon: Icons.support_agent,
+              title: 'Priority Support',
+              description: 'Get help when you need it',
+            ),
+
+            const SizedBox(height: 32),
+
+            // Pricing Header
+            const Text(
+              'Choose Your Plan:',
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // Monthly Plan
+            _buildPricingCard(
+              title: 'Monthly',
+              price: '\$2.99',
+              period: '/month',
+              description: 'Billed monthly',
+              productId: SubscriptionManager.monthlyNoAdsProductId,
+              isBestValue: false,
+            ),
+
+            const SizedBox(height: 16),
+
+            // Yearly Plan (Best Value)
+            _buildPricingCard(
+              title: 'Yearly',
+              price: '\$19.99',
+              period: '/year',
+              description: 'Save 44% - Best Value!',
+              productId: SubscriptionManager.yearlyNoAdsProductId,
+              isBestValue: true,
+            ),
+
+            const SizedBox(height: 16),
+
+            // Lifetime Plan
+            _buildPricingCard(
+              title: 'Lifetime',
+              price: '\$39.99',
+              period: 'one-time',
+              description: 'Pay once, own forever',
+              productId: SubscriptionManager.lifetimeNoAdsProductId,
+              isBestValue: false,
+            ),
+
+            const SizedBox(height: 32),
+
+            // Terms
+            const Text(
+              'All plans include full access to VaultScan features. '
+              'Subscriptions auto-renew unless cancelled 24 hours before renewal.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.grey,
               ),
             ),
 
             const SizedBox(height: 16),
 
-            // Terms
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 24),
-              child: Text(
-                'Payment will be charged to your account. Subscription automatically renews unless cancelled 24 hours before the end of the current period.',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 12, color: Colors.grey),
+            // Restore Purchases Link
+            TextButton(
+              onPressed: _isLoading ? null : _restorePurchases,
+              child: const Text(
+                'Restore Purchases',
+                style: TextStyle(fontSize: 16),
               ),
             ),
 
-            const SizedBox(height: 32),
+            const SizedBox(height: 20),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildFeature(String title, String description) {
+  Widget _buildFeatureItem({
+    required IconData icon,
+    required String title,
+    required String description,
+  }) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.only(bottom: 16.0),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.check_circle, color: Colors.green, size: 24),
-          const SizedBox(width: 12),
+          Container(
+            padding: const EdgeInsets.all(10.0),
+            decoration: BoxDecoration(
+              color: Colors.green.shade50,
+              borderRadius: BorderRadius.circular(10.0),
+            ),
+            child: Icon(
+              icon,
+              color: Colors.green.shade700,
+              size: 24,
+            ),
+          ),
+          const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   title,
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   description,
-                  style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey.shade600,
+                  ),
                 ),
               ],
             ),
+          ),
+          Icon(
+            Icons.check_circle,
+            color: Colors.green.shade700,
+            size: 20,
           ),
         ],
       ),
     );
   }
 
-  Widget _buildPricingCard(
-    String title,
-    String price,
-    String period,
-    String planId, {
-    bool isPremium = false,
-    String? savings,
+  Widget _buildPricingCard({
+    required String title,
+    required String price,
+    required String period,
+    required String description,
+    required String productId,
+    required bool isBestValue,
   }) {
-    final isSelected = _selectedPlan == planId;
-    
-    return GestureDetector(
-      onTap: () => setState(() => _selectedPlan = planId),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: isSelected ? Colors.amber.shade50 : Colors.white,
-          border: Border.all(
-            color: isSelected ? Colors.amber : Colors.grey.shade300,
-            width: isSelected ? 3 : 1,
-          ),
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: isSelected
-              ? [BoxShadow(color: Colors.amber.withOpacity(0.3), blurRadius: 8, spreadRadius: 2)]
-              : [],
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(
+          color: _selectedProductId == productId ? Colors.blue.shade700 : (isBestValue ? Colors.amber.shade700 : Colors.grey.shade300),
+          width: _selectedProductId == productId ? 3 : (isBestValue ? 3 : 1.5),
         ),
-        child: Row(
-          children: [
-            // Radio button
-            Container(
-              width: 24,
-              height: 24,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: isSelected ? Colors.amber : Colors.grey,
-                  width: 2,
-                ),
-              ),
-              child: isSelected
-                  ? Center(
-                      child: Container(
-                        width: 12,
-                        height: 12,
-                        decoration: const BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Colors.amber,
-                        ),
+        borderRadius: BorderRadius.circular(16.0),
+        color: isBestValue ? Colors.amber.shade50 : Colors.white,
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: _isLoading ? null : () { setState(() => _selectedProductId = productId); _purchaseAdRemoval(productId); },
+          borderRadius: BorderRadius.circular(16.0),
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              children: [
+                if (isBestValue)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.amber.shade700,
+                      borderRadius: BorderRadius.circular(20.0),
+                    ),
+                    child: const Text(
+                      'BEST VALUE',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1.2,
                       ),
-                    )
-                  : null,
-            ),
-            
-            const SizedBox(width: 16),
-            
-            // Plan details
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Text(
-                        title,
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      if (savings != null) ...[
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: Colors.green,
-                            borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                if (isBestValue) const SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          title,
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: isBestValue ? Colors.amber.shade900 : Colors.black87,
                           ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          description,
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey.shade600,
+                          ),
+                        ),
+                      ],
+                    ),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          price,
+                          style: TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                            color: isBestValue ? Colors.amber.shade900 : Colors.blue.shade700,
+                          ),
+                        ),
+                        const SizedBox(width: 2),
+                        Padding(
+                          padding: const EdgeInsets.only(top: 6),
                           child: Text(
-                            savings,
-                            style: const TextStyle(
-                              color: Colors.white,
+                            period,
+                            style: TextStyle(
                               fontSize: 12,
-                              fontWeight: FontWeight.bold,
+                              color: Colors.grey.shade600,
                             ),
                           ),
                         ),
                       ],
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    period,
-                    style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-                  ),
-                ],
-              ),
+                    ),
+                  ],
+                ),
+              ],
             ),
-            
-            // Price
-            Text(
-              price,
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: Colors.amber.shade700,
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
   }
 
-  void _handleSubscribe() async {
-    // Activate premium (honor system for now)
-    await _subscriptionManager.setAdFreeForTesting(true);
-    
-    if (mounted) {
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => AlertDialog(
-          title: const Row(
-            children: [
-              Icon(Icons.check_circle, color: Colors.green, size: 32),
-              SizedBox(width: 12),
-              Flexible(child: Text('Welcome to Premium!')),
-            ],
+  Future<void> _purchaseAdRemoval(String productId) async {
+    setState(() => _isLoading = true);
+
+    try {
+      final success = await _subscriptionManager.purchaseAdRemoval(productId);
+      
+      if (!mounted) return;
+      
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Thank you! Ads removed successfully.'),
+            backgroundColor: Colors.green,
           ),
-          content: SingleChildScrollView(child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'You now have access to all premium features:',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 12),
-              const Text('âœ“ Unlimited scans'),
-              const Text('âœ“ AI Document Analysis'),
-              const Text('âœ“ OCR Text Recognition'),
-              const Text('âœ“ Advanced filters & adjustments'),
-              const Text('âœ“ No watermarks'),
-              const Text('âœ“ And much more!'),
-              const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.blue.shade50,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.blue.shade200),
-                ),
-                child: Text(
-                  'Note: Payment processing will be available soon. For now, enjoy all premium features!',
-                  style: TextStyle(fontSize: 12, color: Colors.blue.shade900),
-                ),
-              ),
-            ],
-          ),),
-          actions: [
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context); // Close dialog
-                Navigator.pop(context); // Go back to previous screen
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.amber,
-                foregroundColor: Colors.black,
-              ),
-              child: const Text('Start Using Premium'),
-            ),
-          ],
+        );
+        Navigator.pop(context);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Purchase was cancelled or failed.'),
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Purchase error: ${e.toString()}'),
+          backgroundColor: Colors.red,
         ),
       );
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  Future<void> _restorePurchases() async {
+    setState(() => _isLoading = true);
+
+    try {
+      await _subscriptionManager.restorePurchases();
+      
+      if (!mounted) return;
+
+      setState(() {});
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            _subscriptionManager.isAdFree
+              ? 'Purchases restored successfully!'
+              : 'No previous purchases found'
+          ),
+        ),
+      );
+      
+      if (_subscriptionManager.isAdFree) {
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Restore failed: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 }
-
 
