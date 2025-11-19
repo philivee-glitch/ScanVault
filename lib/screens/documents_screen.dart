@@ -1,5 +1,6 @@
-import 'dart:io';
+﻿import 'dart:io';
 import 'package:flutter/material.dart';
+import '../ad_manager.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'pdf_preview_screen.dart';
@@ -138,7 +139,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
           ],
         ),
         content: Text(
-          '$featureName is a premium feature.\n\nUpgrade to Premium for:\n• Unlimited scans\n• Batch operations\n• AI Analysis & OCR\n• No watermarks\n• And more!\n\nOnly \$4.99/month',
+          '$featureName is a premium feature.\n\nUpgrade to Premium for:\nâ€¢ Unlimited scans\nâ€¢ Batch operations\nâ€¢ AI Analysis & OCR\nâ€¢ No watermarks\nâ€¢ And more!\n\nOnly \$4.99/month',
         ),
         actions: [
           TextButton(
@@ -1036,3 +1037,5 @@ class DocumentSearchDelegate extends SearchDelegate<Document?> {
     );
   }
 }
+
+

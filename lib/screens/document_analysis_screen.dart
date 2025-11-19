@@ -1,5 +1,6 @@
-import 'dart:io';
+﻿import 'dart:io';
 import 'package:flutter/material.dart';
+import '../ad_manager.dart';
 import 'package:flutter/services.dart';
 import '../subscription_manager.dart';
 import '../ocr_service.dart';
@@ -508,6 +509,8 @@ class ChatMessage {
     required this.timestamp,
   });
 }
+
+
 
 
 

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:in_app_review/in_app_review.dart';
 import '../subscription_manager.dart';
@@ -33,13 +33,11 @@ class _HomeScreenState extends State<HomeScreen> {
     _loadBannerAd();
   }
 
-    void _loadBannerAd() {
+    void _loadBannerAd() async {
     if (!_isPremium) {
-      _adManager.loadBannerAd((ad) {
-        setState(() {
-          _bannerAd = ad;
-          _isBannerAdLoaded = true;
-        });
+      await _adManager.loadBannerAd();
+      setState(() {
+        _isBannerAdLoaded = true;
       });
     }
   }
@@ -294,6 +292,9 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 }
+
+
+
 
 
 

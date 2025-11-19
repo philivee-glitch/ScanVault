@@ -1,17 +1,27 @@
 import 'package:flutter/material.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'ad_manager.dart';
 import 'package:flutter/services.dart';
 import 'screens/home_screen.dart';
 import 'subscription_manager.dart';
-import 'ad_manager.dart';
 import 'ocr_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
+  // Initialize AdMob
+  await MobileAds.instance.initialize();
+  
+  // Initialize Ad Manager
+  await AdManager().initialize();
+  
+  // Preload ads
+  await AdManager().loadBannerAd();
+  await AdManager().loadInterstitialAd();
+  
   // Initialize services
   await OCRService().initialize();
   await SubscriptionManager().initialize();
-  await AdManager().initialize();
   
   // Set portrait orientation
   SystemChrome.setPreferredOrientations([
@@ -58,3 +68,6 @@ class MyApp extends StatelessWidget {
     );
   }
 }
+
+
+

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:cunning_document_scanner/cunning_document_scanner.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../subscription_manager.dart';
@@ -195,7 +195,7 @@ class _CameraScreenState extends State<CameraScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                '✓ Page ${_scannedImages.length} captured${!isPremium ? ' • $remaining scans left this month' : ''}',
+                'âœ“ Page ${_scannedImages.length} captured${!isPremium ? ' â€¢ $remaining scans left this month' : ''}',
               ),
               backgroundColor: Colors.green,
               duration: const Duration(seconds: 2),
@@ -229,7 +229,8 @@ class _CameraScreenState extends State<CameraScreen> {
       if (_scanCountSinceLastAd >= 3) {
         debugPrint('Showing interstitial ad...');
         _scanCountSinceLastAd = 0;
-        _adManager.showInterstitialAd(onAdClosed: _navigateToEnhancement);
+        await _adManager.showInterstitialAd();
+      _navigateToEnhancement();
         return;
       }
     }
@@ -454,3 +455,8 @@ class _CameraScreenState extends State<CameraScreen> {
     super.dispose();
   }
 }
+
+
+
+
+

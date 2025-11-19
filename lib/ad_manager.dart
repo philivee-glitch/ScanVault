@@ -9,48 +9,104 @@ class AdManager {
 
   final SubscriptionManager _subscriptionManager = SubscriptionManager();
 
-  // Test Ad Unit IDs (replace with real ones for production)
-  static const String _bannerAdUnitId = 'ca-app-pub-3940256099942544/6300978111'; // Test ID
-  static const String _interstitialAdUnitId = 'ca-app-pub-3940256099942544/1033173712'; // Test ID
+  // Test ad unit IDs (use these during development)
+  // Replace with your real ad unit IDs before publishing
+  static const String _testBannerAdUnitId = 'ca-app-pub-3940256099942544/2934735716';
+  static const String _testInterstitialAdUnitId = 'ca-app-pub-3940256099942544/4411468910';
+  
+  // Production ad unit IDs (get from AdMob dashboard)
+  static const String _prodBannerAdUnitId = 'YOUR_BANNER_AD_UNIT_ID';
+  static const String _prodInterstitialAdUnitId = 'YOUR_INTERSTITIAL_AD_UNIT_ID';
+
+  // Use test ads during development
+  static const bool _useTestAds = true; // Set to false for production
+
+  String get bannerAdUnitId => _useTestAds ? _testBannerAdUnitId : _prodBannerAdUnitId;
+  String get interstitialAdUnitId => _useTestAds ? _testInterstitialAdUnitId : _prodInterstitialAdUnitId;
 
   BannerAd? _bannerAd;
   InterstitialAd? _interstitialAd;
   bool _isBannerAdReady = false;
   bool _isInterstitialAdReady = false;
 
+  // Initialize AdMob
   Future<void> initialize() async {
     await MobileAds.instance.initialize();
   }
 
-  // Banner Ad
-  void loadBannerAd(Function(BannerAd) onAdLoaded) {
-    if (_subscriptionManager.isPremium) return;
+  // Check if ads should be shown (based on subscription status)
+  bool shouldShowAds() {
+    return !_subscriptionManager.isAdFree;
+  }
+
+  // Load banner ad
+  Future<void> loadBannerAd() async {
+    if (!shouldShowAds()) return;
 
     _bannerAd = BannerAd(
-      adUnitId: _bannerAdUnitId,
+      adUnitId: bannerAdUnitId,
       size: AdSize.banner,
       request: const AdRequest(),
       listener: BannerAdListener(
         onAdLoaded: (ad) {
+          print('Banner ad loaded');
           _isBannerAdReady = true;
-          onAdLoaded(ad as BannerAd);
         },
         onAdFailedToLoad: (ad, error) {
-          debugPrint('Banner ad failed to load: $error');
+          print('Banner ad failed to load: $error');
           _isBannerAdReady = false;
           ad.dispose();
+          _bannerAd = null;
         },
       ),
     );
 
-    _bannerAd!.load();
+    await _bannerAd?.load();
   }
 
-  Widget getBannerAdWidget() {
-    if (_subscriptionManager.isPremium || !_isBannerAdReady || _bannerAd == null) {
-      return const SizedBox.shrink();
-    }
+  // Load interstitial ad
+  Future<void> loadInterstitialAd() async {
+    if (!shouldShowAds()) return;
 
+    await InterstitialAd.load(
+      adUnitId: interstitialAdUnitId,
+      request: const AdRequest(),
+      adLoadCallback: InterstitialAdLoadCallback(
+        onAdLoaded: (ad) {
+          print('Interstitial ad loaded');
+          _interstitialAd = ad;
+          _isInterstitialAdReady = true;
+
+          // Set full screen content callback
+          _interstitialAd?.fullScreenContentCallback = FullScreenContentCallback(
+            onAdDismissedFullScreenContent: (ad) {
+              ad.dispose();
+              _interstitialAd = null;
+              _isInterstitialAdReady = false;
+              // Preload next interstitial
+              loadInterstitialAd();
+            },
+            onAdFailedToShowFullScreenContent: (ad, error) {
+              print('Interstitial ad failed to show: $error');
+              ad.dispose();
+              _interstitialAd = null;
+              _isInterstitialAdReady = false;
+            },
+          );
+        },
+        onAdFailedToLoad: (error) {
+          print('Interstitial ad failed to load: $error');
+          _isInterstitialAdReady = false;
+        },
+      ),
+    );
+  }
+
+  // Get banner ad widget
+  Widget? getBannerAdWidget() {
+    if (!shouldShowAds() || _bannerAd == null || !_isBannerAdReady) {
+      return null;
+    }
     return Container(
       alignment: Alignment.center,
       width: _bannerAd!.size.width.toDouble(),
@@ -59,74 +115,24 @@ class AdManager {
     );
   }
 
-  void disposeBannerAd() {
-    _bannerAd?.dispose();
-    _bannerAd = null;
-    _isBannerAdReady = false;
-  }
+  // Show interstitial ad
+  Future<void> showInterstitialAd() async {
+    if (!shouldShowAds()) return;
 
-  // Interstitial Ad
-  void loadInterstitialAd() {
-    if (_subscriptionManager.isPremium) return;
-
-    InterstitialAd.load(
-      adUnitId: _interstitialAdUnitId,
-      request: const AdRequest(),
-      adLoadCallback: InterstitialAdLoadCallback(
-        onAdLoaded: (ad) {
-          _interstitialAd = ad;
-          _isInterstitialAdReady = true;
-
-          ad.fullScreenContentCallback = FullScreenContentCallback(
-            onAdDismissedFullScreenContent: (ad) {
-              ad.dispose();
-              _isInterstitialAdReady = false;
-              loadInterstitialAd(); // Load next ad
-            },
-            onAdFailedToShowFullScreenContent: (ad, error) {
-              debugPrint('Interstitial ad failed to show: $error');
-              ad.dispose();
-              _isInterstitialAdReady = false;
-              loadInterstitialAd();
-            },
-          );
-        },
-        onAdFailedToLoad: (error) {
-          debugPrint('Interstitial ad failed to load: $error');
-          _isInterstitialAdReady = false;
-        },
-      ),
-    );
-  }
-
-  void showInterstitialAd({VoidCallback? onAdClosed}) {
-    if (_subscriptionManager.isPremium || !_isInterstitialAdReady) {
-      onAdClosed?.call();
-      return;
+    if (_interstitialAd != null && _isInterstitialAdReady) {
+      await _interstitialAd?.show();
+      _isInterstitialAdReady = false;
+      _interstitialAd = null;
+    } else {
+      print('Interstitial ad not ready');
     }
-
-    _interstitialAd?.fullScreenContentCallback = FullScreenContentCallback(
-      onAdDismissedFullScreenContent: (ad) {
-        ad.dispose();
-        _isInterstitialAdReady = false;
-        loadInterstitialAd();
-        onAdClosed?.call();
-      },
-      onAdFailedToShowFullScreenContent: (ad, error) {
-        ad.dispose();
-        _isInterstitialAdReady = false;
-        loadInterstitialAd();
-        onAdClosed?.call();
-      },
-    );
-
-    _interstitialAd?.show();
-    _interstitialAd = null;
-    _isInterstitialAdReady = false;
   }
 
+  // Dispose ads
   void dispose() {
-    disposeBannerAd();
+    _bannerAd?.dispose();
     _interstitialAd?.dispose();
   }
 }
+
+

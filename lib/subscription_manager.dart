@@ -1,130 +1,174 @@
-import 'package:shared_preferences/shared_preferences.dart';
+﻿import 'package:shared_preferences/shared_preferences.dart';
+import 'package:in_app_purchase/in_app_purchase.dart';
+import 'dart:async';
 
 class SubscriptionManager {
   static final SubscriptionManager _instance = SubscriptionManager._internal();
   factory SubscriptionManager() => _instance;
   SubscriptionManager._internal();
 
-  // Subscription status
-  bool _isPremium = false;
+  final InAppPurchase _iap = InAppPurchase.instance;
+  StreamSubscription<List<PurchaseDetails>>? _subscription;
   
-  // Scan tracking
-  static const int MAX_FREE_SCANS = 10;
-  int _scansThisMonth = 0;
-  int _scansToday = 0;
-  DateTime? _lastResetDate;
-  DateTime? _lastScanDate;
+  // Ad removal product IDs (not feature unlocks)
+  static const String monthlyNoAdsProductId = 'vaultscan.noads.monthly';
+  static const String yearlyNoAdsProductId = 'vaultscan.noads.yearly';
+  static const String lifetimeNoAdsProductId = 'vaultscan.noads.lifetime';
 
-  bool get isPremium => _isPremium;
-  int get scansThisMonth => _scansThisMonth;
-  int get scansRemaining => MAX_FREE_SCANS - _scansThisMonth;
-  bool get canScan => _isPremium || _scansThisMonth < MAX_FREE_SCANS;
+  bool _isAdFree = false;
+  List<ProductDetails> _products = [];
 
+  // Getter for ad-free status (replaces isPremium)
+  bool get isAdFree => _isAdFree;
+  
+  // For backwards compatibility, keep isPremium but it now means "ad-free"
+  bool get isPremium => _isAdFree;
+
+  List<ProductDetails> get products => _products;
+
+  // Initialize subscription manager
   Future<void> initialize() async {
+    // Check if IAP is available
+    final bool available = await _iap.isAvailable();
+    if (!available) {
+      print('In-app purchases not available');
+      await _loadLocalStatus();
+      return;
+    }
+
+    // Listen to purchase updates
+    final Stream<List<PurchaseDetails>> purchaseUpdated = _iap.purchaseStream;
+    _subscription = purchaseUpdated.listen(
+      _onPurchaseUpdate,
+      onDone: () => _subscription?.cancel(),
+      onError: (error) => print('Purchase stream error: $error'),
+    );
+
+    // Load products
+    await _loadProducts();
+    
+    // Restore previous purchases
+    await restorePurchases();
+  }
+
+  // Load available products from App Store
+  Future<void> _loadProducts() async {
+    final Set<String> productIds = {
+      monthlyNoAdsProductId,
+      yearlyNoAdsProductId,
+      lifetimeNoAdsProductId,
+    };
+
+    try {
+      final ProductDetailsResponse response = await _iap.queryProductDetails(productIds);
+      
+      if (response.error != null) {
+        print('Error loading products: ${response.error}');
+        return;
+      }
+
+      _products = response.productDetails;
+      print('Loaded ${_products.length} products');
+    } catch (e) {
+      print('Exception loading products: $e');
+    }
+  }
+
+  // Load ad-free status from local storage
+  Future<void> _loadLocalStatus() async {
     final prefs = await SharedPreferences.getInstance();
-    _isPremium = prefs.getBool('is_premium') ?? false;
-    _scansThisMonth = prefs.getInt('scans_this_month') ?? 0;
-    _scansToday = prefs.getInt('scans_today') ?? 0;
-    
-    final lastResetString = prefs.getString('last_reset_date');
-    final lastScanString = prefs.getString('last_scan_date');
-    if (lastResetString != null) {
-      _lastResetDate = DateTime.parse(lastResetString);
-    }
-    
-    if (lastScanString != null) {
-      _lastScanDate = DateTime.parse(lastScanString);
-    }
-
-    // Check if we need to reset monthly scan count
-    await _checkAndResetMonthlyScans();
-    await _checkAndResetDailyScans();
+    _isAdFree = prefs.getBool('is_ad_free') ?? false;
   }
 
-  Future<void> _checkAndResetDailyScans() async {
-    final now = DateTime.now();
-    
-    if (_lastScanDate == null ||
-        now.day != _lastScanDate!.day ||
-        now.month != _lastScanDate!.month ||
-        now.year != _lastScanDate!.year) {
-      // Reset scans for new day
-      _scansToday = 0;
-      await _saveData();
-    }
-  }
-
-  Future<void> _checkAndResetMonthlyScans() async {
-    final now = DateTime.now();
-    
-    if (_lastResetDate == null || 
-        now.month != _lastResetDate!.month || 
-        now.year != _lastResetDate!.year) {
-      // Reset scans for new month
-      _scansThisMonth = 0;
-      _lastResetDate = now;
-      await _saveData();
-    }
-  }
-
-  Future<bool> canScanToday() async {
-    if (_isPremium) return true;
-    
-    await _checkAndResetDailyScans();
-    return _scansToday < MAX_FREE_SCANS;
-  }
-
-  Future<int> getRemainingScans() async {
-    if (_isPremium) return 999;
-    
-    await _checkAndResetDailyScans();
-    return 999; // Unlimited for all users
-  }
-
-  Future<bool> incrementScanCount() async {
-    if (_isPremium) return true;
-    
-    await _checkAndResetMonthlyScans();
-    
-    // Unlimited scans for free users (ad-supported)
-    if (false && _scansToday >= MAX_FREE_SCANS) {
-      return false; // Limit reached
-    }
-    
-    _scansThisMonth++;
-    _scansToday++;
-    _lastScanDate = DateTime.now();
-    await _saveData();
-    return true;
-  }
-
-  Future<void> setPremiumStatus(bool isPremium) async {
-    _isPremium = isPremium;
-    await _saveData();
-  }
-
-  Future<void> _saveData() async {
+  // Save ad-free status to local storage
+  Future<void> _saveLocalStatus() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('is_premium', _isPremium);
-    await prefs.setInt('scans_this_month', _scansThisMonth);
-    await prefs.setInt('scans_today', _scansToday);
-    if (_lastResetDate != null) {
-      await prefs.setString('last_reset_date', _lastResetDate!.toIso8601String());
-    }
-    
-    if (_lastScanDate != null) {
-      await prefs.setString('last_scan_date', _lastScanDate!.toIso8601String());
+    await prefs.setBool('is_ad_free', _isAdFree);
+  }
+
+  // Handle purchase updates
+  void _onPurchaseUpdate(List<PurchaseDetails> purchaseDetailsList) {
+    for (final PurchaseDetails purchaseDetails in purchaseDetailsList) {
+      if (purchaseDetails.status == PurchaseStatus.purchased ||
+          purchaseDetails.status == PurchaseStatus.restored) {
+        // Verify purchase and unlock ad-free
+        _unlockAdFree();
+      }
+
+      // Complete the purchase
+      if (purchaseDetails.pendingCompletePurchase) {
+        _iap.completePurchase(purchaseDetails);
+      }
     }
   }
 
-  // Feature checks
-  bool canUseAI() => _isPremium;
-  bool canUseOCR() => _isPremium;
-  bool canUseAdvancedFilters() => _isPremium;
-  bool canUseAdjustments() => _isPremium;
-  bool canUseBatchOperations() => _isPremium;
-  bool shouldShowWatermark() => !_isPremium;
-  bool shouldShowAds() => !_isPremium;
+  // Unlock ad-free status
+  Future<void> _unlockAdFree() async {
+    _isAdFree = true;
+    await _saveLocalStatus();
+    print('Ad-free unlocked!');
+  }
+
+  // Purchase ad removal
+  Future<bool> purchaseAdRemoval(String productId) async {
+    final ProductDetails? productDetails = _products.firstWhere(
+      (product) => product.id == productId,
+      orElse: () => throw Exception('Product not found'),
+    );
+
+    if (productDetails == null) {
+      print('Product not found: $productId');
+      return false;
+    }
+
+    final PurchaseParam purchaseParam = PurchaseParam(
+      productDetails: productDetails,
+    );
+
+    try {
+      // For subscriptions (monthly/yearly)
+      if (productId == monthlyNoAdsProductId || productId == yearlyNoAdsProductId) {
+        return await _iap.buyNonConsumable(purchaseParam: purchaseParam);
+      } 
+      // For lifetime (one-time purchase)
+      else {
+        return await _iap.buyNonConsumable(purchaseParam: purchaseParam);
+      }
+    } catch (e) {
+      print('Purchase error: $e');
+      return false;
+    }
+  }
+
+  // Restore previous purchases
+  Future<void> restorePurchases() async {
+    try {
+      await _iap.restorePurchases();
+      // The _onPurchaseUpdate will handle the restored purchases
+    } catch (e) {
+      print('Restore purchases error: $e');
+    }
+  }
+
+  // Dispose subscription
+  void dispose() {
+    _subscription?.cancel();
+  }
+
+  // Backwards compatibility methods - all features are now free
+  bool canScanToday() => true; // Always allow scanning
+  int getRemainingScans() => 999; // Unlimited
+  Future<void> incrementScanCount() async {} // No-op, no limits
+  bool canUseOCR() => true; // Always allow OCR
+  bool canUseAI() => true; // Always allow AI
+  bool canUseBatchOperations() => true; // Always allow batch
+  int getMaxFolders() => 999; // Unlimited folders
   
-  int getMaxFolders() => _isPremium ? 999 : 3;
+  // For testing: manually set ad-free status
+  Future<void> setAdFreeForTesting(bool isAdFree) async {
+    _isAdFree = isAdFree;
+    await _saveLocalStatus();
+  }
 }
+
+

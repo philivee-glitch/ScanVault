@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../subscription_manager.dart';
 
 class PremiumScreen extends StatefulWidget {
@@ -16,7 +16,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Upgrade to Premium'),
+        title: const Text('Remove Ads'),
         backgroundColor: Colors.amber,
       ),
       body: SingleChildScrollView(
@@ -38,7 +38,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
                   Icon(Icons.workspace_premium, size: 80, color: Colors.white),
                   SizedBox(height: 16),
                   Text(
-                    'Unlock Premium Features',
+                    'Enjoy Ad-Free Experience',
                     style: TextStyle(
                       fontSize: 28,
                       fontWeight: FontWeight.bold,
@@ -67,15 +67,15 @@ class _PremiumScreenState extends State<PremiumScreen> {
                     style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 16),
-                  _buildFeature('🔓 Unlimited Scans', 'Scan as many documents as you need'),
-                  _buildFeature('🤖 AI Document Analysis', 'Smart categorization and key info extraction'),
-                  _buildFeature('📝 OCR Text Recognition', 'Extract and search text from documents'),
-                  _buildFeature('🎨 Advanced Filters', 'B&W, Sharp, and more enhancement options'),
-                  _buildFeature('🎚️ Image Adjustments', 'Fine-tune contrast and saturation'),
-                  _buildFeature('📊 Batch Operations', 'Manage multiple documents at once'),
-                  _buildFeature('🚫 No Watermarks', 'Clean, professional PDFs'),
-                  _buildFeature('📁 Unlimited Folders', 'Organize documents your way'),
-                  _buildFeature('🚀 Priority Support', 'Get help when you need it'),
+                  _buildFeature('ðŸ”“ Unlimited Scans', 'Scan as many documents as you need'),
+                  _buildFeature('ðŸ¤– AI Document Analysis', 'Smart categorization and key info extraction'),
+                  _buildFeature('ðŸ“ OCR Text Recognition', 'Extract and search text from documents'),
+                  _buildFeature('ðŸŽ¨ Advanced Filters', 'B&W, Sharp, and more enhancement options'),
+                  _buildFeature('ðŸŽšï¸ Image Adjustments', 'Fine-tune contrast and saturation'),
+                  _buildFeature('ðŸ“Š Batch Operations', 'Manage multiple documents at once'),
+                  _buildFeature('ðŸš« No Watermarks', 'Clean, professional PDFs'),
+                  _buildFeature('ðŸ“ Unlimited Folders', 'Organize documents your way'),
+                  _buildFeature('ðŸš€ Priority Support', 'Get help when you need it'),
                 ],
               ),
             ),
@@ -316,7 +316,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
 
   void _handleSubscribe() async {
     // Activate premium (honor system for now)
-    await _subscriptionManager.setPremiumStatus(true);
+    await _subscriptionManager.setAdFreeForTesting(true);
     
     if (mounted) {
       showDialog(
@@ -339,12 +339,12 @@ class _PremiumScreenState extends State<PremiumScreen> {
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 12),
-              const Text('✓ Unlimited scans'),
-              const Text('✓ AI Document Analysis'),
-              const Text('✓ OCR Text Recognition'),
-              const Text('✓ Advanced filters & adjustments'),
-              const Text('✓ No watermarks'),
-              const Text('✓ And much more!'),
+              const Text('âœ“ Unlimited scans'),
+              const Text('âœ“ AI Document Analysis'),
+              const Text('âœ“ OCR Text Recognition'),
+              const Text('âœ“ Advanced filters & adjustments'),
+              const Text('âœ“ No watermarks'),
+              const Text('âœ“ And much more!'),
               const SizedBox(height: 12),
               Container(
                 padding: const EdgeInsets.all(12),
@@ -378,3 +378,5 @@ class _PremiumScreenState extends State<PremiumScreen> {
     }
   }
 }
+
+
