@@ -1,34 +1,31 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'ad_manager.dart';
 import 'package:flutter/services.dart';
 import 'screens/home_screen.dart';
+import 'screens/privacy_policy_screen.dart';
+import 'screens/terms_of_service_screen.dart';
+import 'screens/premium_screen.dart';
 import 'subscription_manager.dart';
 import 'ocr_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
   // Initialize AdMob
   await MobileAds.instance.initialize();
-  
   // Initialize Ad Manager
   await AdManager().initialize();
-  
   // Preload ads
   await AdManager().loadBannerAd();
   await AdManager().loadInterstitialAd();
-  
   // Initialize services
   await OCRService().initialize();
   await SubscriptionManager().initialize();
-  
   // Set portrait orientation
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
-  
   runApp(const MyApp());
 }
 
@@ -38,7 +35,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'VaultScan Premium',
+      title: 'VaultScan',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         primarySwatch: Colors.blue,
@@ -65,9 +62,11 @@ class MyApp extends StatelessWidget {
         ),
       ),
       home: const HomeScreen(),
+      routes: {
+        '/privacy': (context) => const PrivacyPolicyScreen(),
+        '/terms': (context) => const TermsOfServiceScreen(),
+        '/premium': (context) => const PremiumScreen(),
+      },
     );
   }
 }
-
-
-

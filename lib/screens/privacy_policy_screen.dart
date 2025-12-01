@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 class PrivacyPolicyScreen extends StatelessWidget {
   const PrivacyPolicyScreen({super.key});
@@ -9,6 +9,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Privacy Policy'),
         backgroundColor: Colors.blue,
+        foregroundColor: Colors.white,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
@@ -16,7 +17,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'VaultScan Premium - Privacy Policy',
+              'VaultScan - Privacy Policy',
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
@@ -31,85 +32,82 @@ class PrivacyPolicyScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 24),
-
             _buildSection(
               'Information We Collect',
-              'VaultScan Premium collects and stores documents that you scan using the app. All documents are stored locally on your device and are not transmitted to our servers unless you explicitly choose to share/export them to your own cloud storage (Google Drive, Dropbox, etc). VaultScan does not host or store your files on our servers.',
+              'VaultScan collects and stores documents that you scan using the app. All documents are stored locally on your device and are not transmitted to our servers unless you explicitly choose to share/export them to your own cloud storage (Google Drive, Dropbox, etc). VaultScan does not host or store your files on our servers.',
             ),
-
+            _buildSection(
+              'Advertising',
+              'VaultScan displays advertisements through Google AdMob. AdMob may collect and use data to provide personalized ads. This may include:\n\n'
+              '- Device identifiers\n'
+              '- IP address\n'
+              '- Usage data\n\n'
+              'You can opt out of personalized advertising in your device settings. For more information, see Google\'s Privacy Policy at policies.google.com/privacy',
+            ),
             _buildSection(
               'How We Use Your Information',
               'We use the information to:\n\n'
-              '• Provide document scanning and management services\n'
-              '• Process in-app purchases and subscriptions\n'
-              '• Improve app functionality and user experience\n'
-              '• Provide customer support',
+              '- Provide document scanning and management services\n'
+              '- Display relevant advertisements\n'
+              '- Process in-app purchases and subscriptions\n'
+              '- Improve app functionality and user experience\n'
+              '- Provide customer support',
             ),
-
             _buildSection(
               'Data Storage',
               'All scanned documents are stored locally on your device in the app\'s private storage directory. We do not have access to your documents unless you explicitly share them with us for support purposes.',
             ),
-
             _buildSection(
               'In-App Purchases',
               'Payment information for in-app purchases is processed securely through Google Play Store. We do not store or have access to your payment card details. Google Play handles all payment processing.',
             ),
-
             _buildSection(
               'Camera Permission',
               'VaultScan requires camera access to scan documents. The camera is only used when you actively choose to scan a document. We do not access your camera at any other time.',
             ),
-
             _buildSection(
               'Data Security',
               'We implement appropriate security measures to protect your information. However, no method of electronic storage is 100% secure, and we cannot guarantee absolute security.',
             ),
-
             _buildSection(
               'Third-Party Services',
               'Our app uses the following third-party services:\n\n'
-              '• Google Play Services (for in-app purchases)\n'
-              '• Google Play Billing (for subscription management)\n\n'
+              '- Google AdMob (for advertising)\n'
+              '- Google Play Services (for in-app purchases)\n'
+              '- Google Play Billing (for subscription management)\n\n'
               'These services have their own privacy policies governing their use of information.',
             ),
-
             _buildSection(
               'Children\'s Privacy',
               'Our app is not directed to children under 13. We do not knowingly collect personal information from children under 13.',
             ),
-
             _buildSection(
               'Your Rights',
               'You have the right to:\n\n'
-              '• Access your data (all stored locally on your device)\n'
-              '• Delete your data (by uninstalling the app or using the clear cache feature)\n'
-              '• Cancel your subscription at any time through Google Play Store',
+              '- Access your data (all stored locally on your device)\n'
+              '- Delete your data (by uninstalling the app or using the clear cache feature)\n'
+              '- Opt out of personalized advertising\n'
+              '- Cancel your subscription at any time through Google Play Store',
             ),
-
             _buildSection(
               'Changes to This Policy',
               'We may update this privacy policy from time to time. We will notify you of any changes by posting the new privacy policy in the app.',
             ),
-
             _buildSection(
               'Contact Us',
               'If you have any questions about this Privacy Policy, please contact us at:\n\n'
               'Email: info@codenestle.com.au',
             ),
-
             const SizedBox(height: 32),
-            
             Center(
               child: Text(
-                '© ${DateTime.now().year} VaultScan. All rights reserved.',
+                'Copyright ${DateTime.now().year} VaultScan. All rights reserved.',
                 style: TextStyle(
                   color: Colors.grey[600],
                   fontSize: 12,
                 ),
               ),
             ),
-            
             const SizedBox(height: 16),
           ],
         ),
